@@ -1,0 +1,24 @@
+{
+  "dependencies": {
+    "logging": "^3.3.0",
+    "ts-node": "^10.4.0",
+    "typescript": "^4.5.5"
+  },
+  "name": "veyauth",
+  "version": "1.0.0",
+  "description": "Authentication backend that works with Veylib",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/verlox/VeyAuth.git"
+  },
+  "author": "verlox",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/verlox/VeyAuth/issues"
+  },
+  "homepage": "https://github.com/verlox/VeyAuth#readme"
+}
