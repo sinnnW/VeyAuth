@@ -1,15 +1,26 @@
 // Based from Disord.js bitfields
+import { IBitField } from '../types/interfaces/IBitField';
 
-export class BitField {
-    constructor(flags: any, bitfield: number = 0) {
+export class BitField implements IBitField {
+    field: number;
+    overrides: [any];
+    FLAGS: any;
+
+    constructor(flags: any, bitfield: number = 0, overrides: [any]) {
         this.FLAGS = flags;
         this.field = bitfield;
     }
 
     has(bit: number): boolean {
-        return (this.field & bit) === bit;
-    }
+        if ((this.field & bit) === bit)
+            return true;
 
-    field: number;
-    FLAGS: any;
+        for (var x = 0;x < this.overrides.length;x++) {
+            if ((this.field & this.overrides[x]) === this.overrides[x])
+                return true;
+        }
+
+        // Fallback
+        return false;
+    }
 }

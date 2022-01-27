@@ -1,8 +1,8 @@
-import { BitField } from "../utils/BitField";
+import { BitField } from '../utils/BitField';
 
 export class UserPermissions extends BitField {
-    constructor() {
-        super(FLAGS);
+    constructor(permissions: number) {
+        super(FLAGS, permissions, [ FLAGS.ADMIN ]);
     }
 
     get (): number { 
@@ -10,7 +10,7 @@ export class UserPermissions extends BitField {
     }
 }
 
-enum FLAGS {
+export enum FLAGS {
     USER = 0,
     ADMIN = 1,
     CREATE_APPLICATION = 2,
