@@ -1,22 +1,34 @@
+import { getShebang } from 'typescript';
 import { BitField } from '../utils/BitField';
 import { FLAGS } from './UserPermissions';
+import { UserPermissions } from './UserPermissions';
 
 export class UserPermissionsArray {
-    array: any;
-    flags: any;
+	permissions: {[key: number]: UserPermissions } = [];
 
-    constructor(flags: any, array: any) {
-        this.flags = flags;
-        this.array = array;
-    }
+	constructor(permissions: any) {
+		this.permissions[-1] = new UserPermissions(permissions);
+	}
 
-    has(bit: number): boolean {
-        for (var x = 0;x < this.array.length;x++) {
-            if (new BitField(this.flags, this.array[x], [ FLAGS.ADMIN ]).has(bit)) 
-                return true;
-        }
+	// TODO: ADD CHECK TO SEE IF ITS BEEN AUTHED, OR JUST GOTTEN INFO
+	has(bit: number, appId: number): boolean {
+		// Global permissions
+		var gbf = new BitField(FLAGS, this.permissions[-1]?.field, [ FLAGS.ADMIN ]);
+		
+		// Application specific permissions
+		var bf = new BitField(FLAGS, this.permissions[appId]?.field, [ FLAGS.ADMIN ]);
 
-        // Fallback
-        return false;
-    }
-}
+		if (bf.has(bit) || gbf?.has(bit))
+			return true;
+		else
+			return false;
+	}
+
+	set(appId: number, permissions: number): void {
+		this.permissions[appId].field = permissions;
+	}
+
+	get(appId: number): UserPermissions {
+		return this.permissions[appId];
+	}
+}   

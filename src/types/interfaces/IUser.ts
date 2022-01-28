@@ -1,11 +1,13 @@
 import { IBase } from './IBase';
-import { UserPermissions } from '../UserPermissions';
+import { UserPermissionsArray } from '../UserPermissionsArray';
+import { App } from '../App';
 
 export interface IUser extends IBase {
-    applicationId: number;
+    authenticated: boolean;
+    application: App;
     username: string;
     password: string;
     token: string;
     hwid?: string;
-    permissions: [appId: number, permissions: UserPermissions];
+    permissions: UserPermissionsArray;//[appId: number, permissions: UserPermissions];
 }

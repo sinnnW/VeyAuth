@@ -1,15 +1,5 @@
 import { BitField } from '../utils/BitField';
 
-export class UserPermissions extends BitField {
-    constructor(permissions: number) {
-        super(FLAGS, permissions, [ FLAGS.ADMIN ]);
-    }
-
-    get (): number { 
-        return this.field;
-    }
-}
-
 export enum FLAGS {
     USER = 0,
     ADMIN = 1,
@@ -42,4 +32,18 @@ export enum FLAGS {
     CREATE_SUBSCRIPTION = 65536,
     DELETE_SUBSCRIPTION = 131072,
     MODIFY_SUBSCRIPTION = 262144,
+}
+
+export class UserPermissions extends BitField {
+    // FLAGS are subset of UserPermissions
+    static FLAGS = FLAGS;
+
+    constructor(permissions: number) {
+        super(FLAGS, permissions, [ FLAGS.ADMIN ]);
+    }
+
+    // WTF? this is the type of code that you find and never know the purpose of because it was recoded 10 times over
+    get (): number { 
+        return this.field;
+    }
 }

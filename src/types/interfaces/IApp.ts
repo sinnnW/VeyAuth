@@ -5,6 +5,7 @@ import { User } from '../User';
 export interface IApp extends IBase {
     name: string;
     description: string;
+    owner: User;
 
     getUserCount(): number;
     getVars(authToken: string, hwid: string): [vars: IVar];
