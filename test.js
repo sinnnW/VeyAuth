@@ -1,5 +1,7 @@
 const winston = require('winston');
-const {Auth, encodeUser} = require("./dist");
+const { Auth, User, App } = require("./dist");
+const { UserPermissionsArray }= require('./dist/types/UserPermissionsArray.js')
+const fs = require('fs');
 require("dotenv").config();
 
 var auth = new Auth({
@@ -13,4 +15,19 @@ var auth = new Auth({
     ]
 })
 
-encodeUser({ usernane: "test", password: "test2"}, process.env.SESSION_SECRET);
+setTimeout(async() => {
+    try {
+        var admin = await User.get('token');console.log(admin)
+        var app = await App.get(-1);
+        User.create(admin, app, 'verlox', 'testpass')
+            .then(usr => {
+                // User.get(0).then(console.log).catch(console.error);
+                usr.application.owner = "REMOVED FOR OUTPUT"
+                fs.writeFileSync(__dirname + 'user.txt', JSON.stringify(usr, null, 2));
+            })
+            .catch(console.error);
+    }catch (e)
+    {
+        console.error(e);
+    }
+}, 500);
