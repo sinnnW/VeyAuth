@@ -20,12 +20,15 @@ var auth = new Auth({
     ]
 })
 
+// console.log(require('./dist/utils/Utils.js').Utils.hasSpecialChars("whatthe+fuck"))
+
 setTimeout(async() => {
     try {
         var admin = await User.get('token');
         var app = await App.get(-1);
-        User.create(admin, app, 'verlox2', 'testpass')
+        User.create(admin, app, `testing_${Math.round(Math.random() * 100)}`, 'testpass')
             .then(usr => {
+                console.log(usr);
                 // User.get(0).then(console.log).catch(console.error);
                 // usr.application.owner = "REMOVED FOR OUTPUT"
                 // fs.writeFileSync(__dirname + 'user.txt', JSON.stringify(usr, null, 2));

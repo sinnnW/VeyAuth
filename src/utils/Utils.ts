@@ -19,6 +19,6 @@ export class Utils {
     
     // Make sure that the input ONLY contains letters a-z, and numbers
     static hasSpecialChars(input: string): boolean {
-        return !/[a-zA-Z0-9 ]/g.test(input);
+        return /[^a-zA-Z0-9.-_]/i.test(input);
     }
 }
