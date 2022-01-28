@@ -41,27 +41,34 @@ export class User implements IUser {
 
             var id = 0;
             var token: string;
-            Auth.db.get('SELECT id FROM users WHERE application_id = ? ORDER BY id DESC', [ app.id ], (err, data) => {
+            Auth.db.get('SELECT id FROM users WHERE application_id = ? AND username = ?', [ app.id, username ], (err, data) => {
                 if (err)
                     return reject(err);
                 else if (data)
-                    id = data.id + 1;
+                    return reject("Username is already taken");
 
-                let tmpusr = new User();
-                tmpusr.id = id;
-                tmpusr.username = username;
-                tmpusr.password = password;
-                tmpusr.permissions = permissions || new UserPermissionsArray(UserPermissions.FLAGS.USER);
-                    
-                token = SecurityHelper.encodeUser(tmpusr);
-
-                Auth.db.run('INSERT INTO users (id, application_id, username, password, token, permissions) VALUES (?, ?, ?, ?, ?, ?)', [ id, app.id, username, password, token, tmpusr.permissions.get(-1).field ], async err => {
+                Auth.db.get('SELECT id FROM users WHERE application_id = ? ORDER BY id DESC', [ app.id ], (err, data) => {
                     if (err)
-                        return reject(err)
-                    else
-                        return resolve(await User.get(id));
-                })
-            });
+                        return reject(err);
+                    else if (data)
+                        id = data.id + 1;
+    
+                    let tmpusr = new User();
+                    tmpusr.id = id;
+                    tmpusr.username = username;
+                    tmpusr.password = password;
+                    tmpusr.permissions = permissions || new UserPermissionsArray(UserPermissions.FLAGS.USER);
+                        
+                    token = SecurityHelper.encodeUser(tmpusr);
+    
+                    Auth.db.run('INSERT INTO users (id, application_id, username, password, token, permissions) VALUES (?, ?, ?, ?, ?, ?)', [ id, app.id, username, password, token, tmpusr.permissions.get(-1).field ], async err => {
+                        if (err)
+                            return reject(err)
+                        else
+                            return resolve(await User.get(id));
+                    })
+                });
+            })
         });
     }
 
