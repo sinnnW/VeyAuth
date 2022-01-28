@@ -93,11 +93,11 @@ export class User implements IUser {
             Auth.db.get('SELECT owner_id FROM applications WHERE id = ?', [ data.application_id ], async (err, row) => {
                 if (err)
                     return reject(err);
-                else if (row && row.owner_id == data.application_id)
+                else if (row && row.owner_id == data.id)
                     omit = true;
 
                 var usr = new User();
-                // Set the properties from the db
+                
                 try {
                     usr.application = await App.get(data.application_id, omit);
                 } catch (e) {console.error(e)}
@@ -105,6 +105,7 @@ export class User implements IUser {
                 if (omit)
                     usr.application.owner = usr;
 
+                // Set the properties from the db
                 usr.id = data.id;
                 usr.username = data.username;
                 usr.token = data.token;
