@@ -9,6 +9,7 @@ export class BitField implements IBitField {
     constructor(flags: any, bitfield: number = 0, overrides: [any]) {
         this.FLAGS = flags;
         this.field = bitfield;
+        this.overrides = overrides;
     }
 
     has(bit: number): boolean {
