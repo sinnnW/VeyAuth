@@ -18,11 +18,30 @@ export class User implements IUser {
     disabled: boolean = false;
     disableReason?: string = 'No reason';
 
-    constructor() {
-        
+    /**
+     * Recalculate the users token, good for when you change SESSION_SECRET
+     */
+    recalculateToken() {
+        if (!this.permissions.has(UserPermissions.FLAGS.MODIFY_USERS, this.application.id))
+            throw new Error("Invalid permissions")
+
+        var token = SecurityHelper.encodeUser(this)
+        Auth.db.run('UPDATE users SET token = ? WHERE id = ?', [ this.id ], err => {
+            if (err)
+                throw err;
+        })
     }
 
-    static create(auth: User, app: App, username: string, password: string, permissions: UserPermissionsArray) {
+    /**
+     * Create a user in the database
+     * @param auth Authenticated user
+     * @param app Application it will be under
+     * @param username
+     * @param password
+     * @param permissions Permissions they will have
+     * @returns Promise<User>
+     */
+    static create(auth: User, app: App, username: string, password: string, permissions: UserPermissionsArray): Promise<User> {
         return new Promise<User>((resolve, reject) => {
             // Make sure that username doesn't contain stupid ass unicode or special chars.
             if (Utils.hasSpecialChars(username))
@@ -72,6 +91,11 @@ export class User implements IUser {
         });
     }
 
+    /**
+     * Gets a user by token or ID
+     * @param identifier Get by token or ID
+     * @returns Promise<User> found
+     */
     static get(identifier: any): Promise<User> {
         return new Promise(async (resolve, reject) => {
             switch (typeof identifier) {
@@ -87,6 +111,7 @@ export class User implements IUser {
         })
     }
 
+    // This function will fill out the data returned
     private static fill(data: any, authed: boolean = false): Promise<User> {
         return new Promise((resolve, reject) => {
             var omit = false;
@@ -129,6 +154,7 @@ export class User implements IUser {
         })
     }
 
+    // Get a user by the token
     private static async getByToken(token: string): Promise<User> {
         return new Promise<User>((resolve, reject) => {
             // Base user information
@@ -145,6 +171,7 @@ export class User implements IUser {
         })
     }
 
+    // Get a user by ID
     private static async getById(id: number): Promise<User> {
         return new Promise((resolve, reject) => {
             Auth.db.get('SELECT * FROM users WHERE id = ?', [ id ], async (err ,data) => {
@@ -156,18 +183,6 @@ export class User implements IUser {
                 delete data.token;
                 return resolve(await this.fill(data));
             })
-        })
-    }
-
-    recalculateToken()
-    {
-        if (!this.permissions.has(UserPermissions.FLAGS.MODIFY_USERS, this.application.id))
-            throw new Error("Invalid permissions")
-
-        var token = SecurityHelper.encodeUser(this)
-        Auth.db.run('UPDATE users SET token = ? WHERE id = ?', [ this.id ], err => {
-            if (err)
-                throw err;
         })
     }
 }

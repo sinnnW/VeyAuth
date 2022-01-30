@@ -26,12 +26,10 @@ setTimeout(async() => {
     try {
         var admin = await User.get('token');
         var app = await App.get(-1);
-        User.create(admin, app, `testing_${Math.round(Math.random() * 100)}`, 'testpass')
+        await User.create(admin, app, 'verlox2', 'godcc', new UserPermissionsArray(1))
+        User.get('eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJ1c2VybmFtZSI6InZlcmxveCIsInBhc3N3b3JkIjoiOWRmZjY3ZjdkODdlN2RiNTFiMDMwZGEyY2VjZDhhMmQ1OGU0ZDU4MTdhMTA4YzNmZDM0NjExYjgxNzkzNzJlMSJ9.s37y3oOrvetdOWQDICdwMsHIqDhUSuWpEv8hOAR2YcjUNsqiubL0nbZdGzfeQVyGUrLjmaPlo3iifT1RJIBbWA')
             .then(usr => {
                 console.log(usr);
-                // User.get(0).then(console.log).catch(console.error);
-                // usr.application.owner = "REMOVED FOR OUTPUT"
-                // fs.writeFileSync(__dirname + 'user.txt', JSON.stringify(usr, null, 2));
             })
             .catch(console.error);
     }catch (e)
