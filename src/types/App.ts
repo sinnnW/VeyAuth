@@ -4,7 +4,15 @@ import { User } from './User';
 import { Auth } from '..';
 import { Utils } from '../utils/Utils';
 
+enum GET_FLAGS {
+	GET_BY_ID,
+	GET_BY_NAME
+}
+
 export class App implements IApp {
+	// FLAGS
+	static GET_FLAGS = GET_FLAGS;
+
     // IBase fields
 	id: number;
 	disabled: boolean;
@@ -25,7 +33,7 @@ export class App implements IApp {
     {
 		return new Promise(async (resolve, reject) => {
 			// Get authenticated user
-			User.get(auth.token)
+			User.get(auth.token, User.GET_FLAGS.GET_BY_TOKEN)
 				.then(user => {
 					// initalize in _db
 					Auth.db.serialize(() => {
@@ -49,7 +57,7 @@ export class App implements IApp {
 								if (err)
 									return reject(err);
 								else
-									App.get(id).then(resolve).catch(reject);
+									App.get(id, GET_FLAGS.GET_BY_ID).then(resolve).catch(reject);
 							});
 						})
 					});
@@ -107,13 +115,13 @@ export class App implements IApp {
 	// If the input is a string, try and fetch by name, if its a number,
 	// try and fetch by name, else, reject.
 	// - verlox @ 1/28/22
-	static get(identifier: any, omitOwner: boolean = false): Promise<App> {
+	static get(identifier: any, method: GET_FLAGS, omitOwner: boolean = false): Promise<App> {
 		return new Promise((resolve, reject) => {
-			switch (typeof identifier) {
-				case 'string':
+			switch (method) {
+				case GET_FLAGS.GET_BY_NAME:
 					App.getByName(identifier, omitOwner).then(resolve).catch(reject);
 					break;
-				case 'number':
+				case GET_FLAGS.GET_BY_ID:
 					App.getById(+identifier, omitOwner).then(resolve).catch(reject);
 					break;
 				default:
@@ -134,7 +142,7 @@ export class App implements IApp {
             // Set the properties from the db
 			if (!omitOwner) {
 				try {
-					app.owner = await User.get(data.owner_id);
+					app.owner = await User.get(data.owner_id, User.GET_FLAGS.GET_BY_ID);
 				} catch {}
 			}
 

@@ -6,7 +6,15 @@ import { App } from './App';
 import { Utils } from '../utils/Utils';
 import { SecurityHelper } from '../utils/SecurityHelper';
 
+enum GET_FLAGS {
+    GET_BY_ID,
+    // GET_BY_USERNAME,
+    GET_BY_TOKEN
+};
+
 export class User implements IUser {
+    static GET_FLAGS = GET_FLAGS;
+
     authenticated: boolean = false;
     id: number;
     application: App;
@@ -21,9 +29,9 @@ export class User implements IUser {
     /**
      * Recalculate the users token, good for when you change SESSION_SECRET
      */
-    recalculateToken() {
+    recalculateToken() {throw new Error('not implemented, go cry.');
         if (!this.permissions.has(UserPermissions.FLAGS.MODIFY_USERS, this.application.id))
-            throw new Error("Invalid permissions")
+            throw new Error('Invalid permissions')
 
         var token = SecurityHelper.encodeUser(this)
         Auth.db.run('UPDATE users SET token = ? WHERE id = ?', [ this.id ], err => {
@@ -39,52 +47,60 @@ export class User implements IUser {
      * @param username
      * @param password
      * @param permissions Permissions they will have
-     * @returns Promise<User>
+     * @returns Promise<User> created
      */
     static create(auth: User, app: App, username: string, password: string, permissions: UserPermissionsArray): Promise<User> {
         return new Promise<User>((resolve, reject) => {
             // Make sure that username doesn't contain stupid ass unicode or special chars.
             if (Utils.hasSpecialChars(username))
-                return reject("Username cannot contain special characters")
+                return reject('Username cannot contain special characters')
 
             // Make sure the auth user has permissions
             else if (!auth.permissions.has(UserPermissions.FLAGS.CREATE_USERS, app.id))
-                return reject("Invalid permissions");
+                return reject('Invalid permissions');
 
             // If the user supplied a number for the permissions, translate it into a UserPermissionsArray
             else if (typeof permissions === 'number')
                 permissions = new UserPermissionsArray(permissions);
-                
-            // Hash the password
-            password = SecurityHelper.hashString(password);
-
-            var id = 0;
-            var token: string;
+            
+            // Gotta make sure that the username isn't already taken
             Auth.db.get('SELECT id FROM users WHERE application_id = ? AND username = ?', [ app.id, username ], (err, data) => {
                 if (err)
-                    return reject(err);
-                else if (data)
-                    return reject("Username is already taken");
+                    return reject(err); // Some shitass error.
+                else if (data) // Thats not good
+                    return reject('Username is already taken');
 
+                // Fallback ID is 0
+                var id = 0;
+
+                // Get the application id
                 Auth.db.get('SELECT id FROM users WHERE application_id = ? ORDER BY id DESC', [ app.id ], (err, data) => {
                     if (err)
-                        return reject(err);
+                        return reject(err); // This shit really does get repetitive don't it?
                     else if (data)
-                        id = data.id + 1;
+                        id = data.id + 1; // Increment the ID by 1 if there was data
     
+                    // Create the temp user
                     let tmpusr = new User();
                     tmpusr.id = id;
                     tmpusr.username = username;
-                    tmpusr.password = password;
+                    tmpusr.password = SecurityHelper.hashString(password); // Fucking password hashing, SHA256.
                     tmpusr.permissions = permissions || new UserPermissionsArray(UserPermissions.FLAGS.USER);
                         
-                    token = SecurityHelper.encodeUser(tmpusr);
+                    // Create a token
+                    var token = SecurityHelper.encodeUser(tmpusr);
     
-                    Auth.db.run('INSERT INTO users (id, application_id, username, password, token, permissions) VALUES (?, ?, ?, ?, ?, ?)', [ id, app.id, username, password, token, tmpusr.permissions.get(-1).field ], async err => {
+                    // Run the database statement to insert to user into the database
+                    Auth.db.run('INSERT INTO users (id, application_id, username, password, token) VALUES (?, ?, ?, ?, ?, ?)', [ id, app.id, username, password, token ], async err => {
                         if (err)
-                            return reject(err)
-                        else
-                            return resolve(await User.get(id));
+                            return reject(err); // Nah.
+                        else {
+                            // Save the permissions
+                            tmpusr.permissions.save();
+
+                            // Get the user and return it
+                            return resolve(await User.get(id, GET_FLAGS.GET_BY_ID));
+                        }
                     })
                 });
             })
@@ -96,13 +112,13 @@ export class User implements IUser {
      * @param identifier Get by token or ID
      * @returns Promise<User> found
      */
-    static get(identifier: any): Promise<User> {
+    static get(identifier: any, method: GET_FLAGS): Promise<User> {
         return new Promise(async (resolve, reject) => {
-            switch (typeof identifier) {
-                case 'string':
+            switch (method) {
+                case GET_FLAGS.GET_BY_TOKEN:
                     this.getByToken(identifier).then(resolve).catch(reject);
                     break;
-                case 'number':
+                case GET_FLAGS.GET_BY_ID:
                     this.getById(+identifier).then(resolve).catch(reject);
                     break;
                 default:
@@ -124,7 +140,7 @@ export class User implements IUser {
                 var usr = new User();
                 
                 try {
-                    usr.application = await App.get(data.application_id, omit);
+                    usr.application = await App.get(data.application_id, App.GET_FLAGS.GET_BY_ID, omit);
                 } catch (e) {console.error(e)}
                 
                 if (omit)
@@ -185,4 +201,6 @@ export class User implements IUser {
             })
         })
     }
+
+    
 }
