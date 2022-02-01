@@ -22,7 +22,7 @@ export class Auth {
 		// Applications table
 		Auth.db.run('CREATE TABLE IF NOT EXISTS "applications" ("id" INTEGER,"owner_id" INTEGER,"name" TEXT,"description" TEXT,"disabled" INTEGER DEFAULT 0,"disable_reason" TEXT DEFAULT "No reason","subscriptions_enabled" INTEGER DEFAULT 0,"invite_required" INTEGER DEFAULT 0,"hwid_locked" INTEGER DEFAULT 0,PRIMARY KEY("id"))');
 		// User table
-		Auth.db.run('CREATE TABLE IF NOT EXISTS "users" ("id" INTEGER, "application_id" INTEGER, "username" INTEGER, "password" TEXT, "token" TEXT NOT NULL, "permissions" INTEGER NOT NULL DEFAULT 0, "disabled" INTEGER NOT NULL DEFAULT 0, "disable_reason" TEXT DEFAULT "No reason",  PRIMARY KEY("application_id","id"))');
+		Auth.db.run('CREATE TABLE IF NOT EXISTS "users" ("id" INTEGER, "application_id" INTEGER, "username" INTEGER, "password" TEXT, "token" TEXT NOT NULL, "disabled" INTEGER NOT NULL DEFAULT 0, "disable_reason" TEXT DEFAULT "No reason",  PRIMARY KEY("application_id","id"))');
 		// Permissions table
 		Auth.db.run('CREATE TABLE IF NOT EXISTS "permissions" ("application_id" INTEGER NOT NULL, "user_id" INTEGER NOT NULL, "permissions" INTEGER NOT NULL, PRIMARY KEY("application_id","user_id"))');
 
