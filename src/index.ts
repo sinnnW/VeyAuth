@@ -24,7 +24,7 @@ export class Auth {
 		// User table
 		Auth.db.run('CREATE TABLE IF NOT EXISTS "users" ("id" INTEGER, "application_id" INTEGER, "username" INTEGER, "password" TEXT, "token" TEXT NOT NULL, "disabled" INTEGER NOT NULL DEFAULT 0, "disable_reason" TEXT DEFAULT "No reason",  PRIMARY KEY("application_id","id"))');
 		// Permissions table
-		Auth.db.run('CREATE TABLE IF NOT EXISTS "permissions" ("application_id" INTEGER NOT NULL, "user_id" INTEGER NOT NULL, "permissions" INTEGER NOT NULL, PRIMARY KEY("application_id","user_id"))');
+		Auth.db.run('CREATE TABLE IF NOT EXISTS "permissions" ("application_id" INTEGER NOT NULL, "user_id" INTEGER NOT NULL, "permissions" INTEGER, PRIMARY KEY("application_id","user_id"))');
 
 		// Check all the environmental vars, if they don't exist, create them
 		// - verlox @ 1/28/22
