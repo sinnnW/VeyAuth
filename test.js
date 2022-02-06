@@ -30,6 +30,7 @@ setTimeout(async() => {
         var newuser = await User.create(admin, app, 'verlox2', 'godcc', new UserPermissionsArray(1))
         console.log(`created ${newuser.username} under application named ${newuser.application.name}`);
         
+        newuser.setUsername('testusername');
 
         await newuser.delete();
         console.log(`deleted ${newuser.username}`);

@@ -16,14 +16,16 @@ export class User implements IUser {
     static GET_FLAGS = GET_FLAGS;
     readonly authenticated: boolean = false;
     id: number;
-    application: App;
     username: string;
+    password: string; // The pass hash, this is readonly because you have to use setPassword()
     token: string;
     hwid?: string;
-    password: string; // The pass hash
     permissions: UserPermissionsArray;
     disabled: boolean = false;
     disableReason?: string = 'No reason';
+    application: App;
+    
+    #changes = false;
 
     constructor(authed?: boolean) {
         this.authenticated = authed || false;
@@ -32,15 +34,117 @@ export class User implements IUser {
     /**
      * Recalculate the users token, good for when you change SESSION_SECRET
      */
-    recalculateToken() {throw new Error('not implemented, go cry.');
-        // if (!this.permissions.has(UserPermissions.FLAGS.MODIFY_USERS, this.application.id))
-        //     throw new Error('Invalid permissions')
+    recalculateToken(auth: User): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
+            if (!auth || !auth.permissions.has(UserPermissions.FLAGS.MODIFY_USERS, this.application.id))
+                return reject('Invalid permissions')
+    
+            var token = SecurityHelper.encodeUser(this)
+            Auth.db.run('UPDATE users SET token = ? WHERE id = ?', [ token, this.id ], err => {
+                if (err)
+                    return reject(err);
+                else
+                    return resolve(token);
+            })
+        })
+    }
 
-        // var token = SecurityHelper.encodeUser(this)
-        // Auth.db.run('UPDATE users SET token = ? WHERE id = ?', [ this.id ], err => {
-        //     if (err)
-        //         throw err;
-        // })
+    /**
+     * Set the disabled state
+     * @param disabled true = disabled, false = enabled
+     */
+    setDisabled(disabled: boolean) {
+        this.#changes = true;
+        this.disabled = disabled;
+    }
+
+    /**
+     * Enable the user
+     */
+    enable() {
+        this.setDisabled(false);
+    }
+
+    /**
+     * Disable the user
+     */
+    disable() { 
+        this.setDisabled(true);
+    }
+
+    /**
+     * Set the disable reason
+     * @param reason Reason for being disabled
+     */
+    setDisableReason(reason: string) {
+        this.#changes = true;
+        this.disableReason = reason;
+    }
+
+    /**
+     * Set the username
+     * @param username The new username
+     */
+    setUsername(username: string) {
+        this.#changes = true;
+        this.username = username;
+    }
+    
+    /**
+     * Set the password
+     * @param password The new (unhashed) password
+     */
+    setPassword(password: string) {
+        this.#changes = true;
+        this.password = password;
+    }
+
+    /**
+     * Set the HardWare ID
+     * @param hwid New HWID
+     */
+    setHWID(hwid: string) {
+        this.#changes = true;
+        this.hwid = hwid;
+    }
+
+    /**
+     * Saves the user
+     * @returns Promise<User>
+     */
+    save(auth: User): Promise<User> {
+        return new Promise<User>((resolve, reject) => {
+            // If this is true, there are no changes to make
+            if (!this.#changes)
+                return resolve(this);
+
+            // Make sure that they have permission
+            else if (!auth || !auth.permissions.has(UserPermissions.FLAGS.MODIFY_USERS, this.application.id))
+                return reject('Invalid permissions')
+
+            // Make sure all the required fields are filled
+            else if (!this.username || !this.password || !this.disabled)
+                return reject('Username, password, and disabled are required.');
+
+            // Make sure the username doesn't contain special chars
+            else if (Utils.hasSpecialChars(this.username))
+                return reject('Username cannot contain special characters')
+
+            // Run all the save commands
+            Auth.db.serialize(() => {
+                Auth.db.run('UPDATE users SET username = ? WHERE id = ?', [ this.username, this.id ]);
+                Auth.db.run('UPDATE users SET password = ? WHERE id = ?', [ SecurityHelper.hashString(this.password), this.id ]);
+                Auth.db.run('UPDATE users SET disabled = ? WHERE id = ?', [ this.disabled ? 1 : 0, this.id ]);
+                Auth.db.run('UPDATE users SET disable_reason = ? WHERE id = ?', [ this.disableReason, this.id ]);
+                Auth.db.run('UPDATE users SET hwid = ? WHERE id = ?', [ this.hwid, this.id ], async () => {
+                    // Recalculate the token, just in case
+                    this.recalculateToken(auth);
+    
+                    // Return the updated user
+                    return resolve(this);
+                });
+            })
+        });
     }
 
     /**

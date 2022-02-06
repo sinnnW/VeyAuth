@@ -6,11 +6,19 @@ import { User } from './User';
 
 export class UserPermissionsArray {
 	permissions: {[key: number]: UserPermissions } = [];
-	private parentUser?: User;
 
+	// # will make this truely private.
+	// This is just the user that is the parent
+	#parentUser?: User;
+
+	/**
+	 * 
+	 * @param permissions Permissions as a number
+	 * @param parentUser The parent
+	 */
 	constructor(permissions: number, parentUser?: User) {
 		this.permissions[-1] = new UserPermissions(permissions ?? FLAGS.USER);
-		this.parentUser = parentUser;
+		this.#parentUser = parentUser;
 	}
 
 	/**
@@ -20,9 +28,8 @@ export class UserPermissionsArray {
 	 * @returns Permission status
 	 */
 	has(bit: number, appId: number): boolean {
-		// FUCKKKKK ILL FIX THIS LATER
-		// TODO: FUCK
-		if (!this.parentUser || !this.parentUser.authenticated)
+		// Make sure that parentUser is defined, and that the user is authenticated
+		if (!this.#parentUser || !this.#parentUser.authenticated)
 			return false;
 
 		// Global permissions
@@ -61,7 +68,7 @@ export class UserPermissionsArray {
 	 */
 	save() {
 		// Make sure the user is authenticated
-		if (!this.parentUser || !this.parentUser.authenticated)
+		if (!this.#parentUser || !this.#parentUser.authenticated)
 			return;
 
 		for (var x = 0;x < Object.values(this.permissions).length;x++) {
@@ -72,7 +79,7 @@ export class UserPermissionsArray {
 			if (!value)
 				continue;
 
-			Auth.db.run('REPLACE INTO permissions (application_id, user_id, permissions) VALUES (?, ?, ?)', [ key, this.parentUser?.id, value.field ]);
+			Auth.db.run('REPLACE INTO permissions (application_id, user_id, permissions) VALUES (?, ?, ?)', [ key, this.#parentUser?.id, value.field ]);
 		}
 	}
 
@@ -81,6 +88,6 @@ export class UserPermissionsArray {
 	 * @param parent
 	 */
 	setParent(parent: User) {
-		this.parentUser = parent;
+		this.#parentUser = parent;
 	}
 }
