@@ -123,7 +123,8 @@ export class User implements IUser {
                 return reject('Invalid permissions')
 
             // Make sure all the required fields are filled
-            else if (!this.username || !this.password || !this.disabled)
+            console.log(this.username, this.password, this.disabled)
+            else if (!this.username || !this.password || (!this.disabled && this.disabled !== false))
                 return reject('Username, password, and disabled are required.');
 
             // Make sure the username doesn't contain special chars
@@ -225,7 +226,7 @@ export class User implements IUser {
                             tmpusr.permissions.save();
 
                             // Get the user and return it
-                            return resolve(await User.get(id, GET_FLAGS.GET_BY_ID));
+                            return resolve(await User.get(token, GET_FLAGS.GET_BY_TOKEN));
                         }
                     })
                 });
@@ -275,9 +276,9 @@ export class User implements IUser {
                 // Set the properties from the db
                 usr.id = data.id;
                 usr.username = data.username;
-                usr.token = data.token;
                 usr.hwid = data.hwid;
                 usr.permissions = new UserPermissionsArray(UserPermissions.FLAGS.USER, usr);//[-1, new UserPermissions(data.permissions)];
+                usr.token = data.token;
 
                 // Application specified permissions
                 Auth.db.all('SELECT * FROM permissions WHERE user_id = ?', [ usr.id ], (err2, row2: any) => {
@@ -322,6 +323,7 @@ export class User implements IUser {
                     return reject('Unknown user');
     
                 delete data.token;
+                delete data.password;
                 return resolve(await this.fill(data));
             })
         })

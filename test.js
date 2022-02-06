@@ -26,11 +26,12 @@ setTimeout(async() => {
     try {
         var admin = await User.get('token', User.GET_FLAGS.GET_BY_TOKEN);
         var app = await App.get(0, App.GET_FLAGS.GET_BY_ID);
-        admin.permissions.get(-1)
+
         var newuser = await User.create(admin, app, 'verlox2', 'godcc', new UserPermissionsArray(1))
         console.log(`created ${newuser.username} under application named ${newuser.application.name}`);
         
         newuser.setUsername('testusername');
+        console.log(await newuser.save(admin));
 
         await newuser.delete();
         console.log(`deleted ${newuser.username}`);
