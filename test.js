@@ -26,15 +26,21 @@ setTimeout(async() => {
     try {
         var admin = await User.get('token', User.GET_FLAGS.GET_BY_TOKEN);
         var app = await App.get(0, App.GET_FLAGS.GET_BY_ID);
-        await User.create(admin, app, 'verlox2', 'godcc', new UserPermissionsArray(1))
-        User.get('eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJ1c2VybmFtZSI6InZlcmxveCIsInBhc3N3b3JkIjoiOWRmZjY3ZjdkODdlN2RiNTFiMDMwZGEyY2VjZDhhMmQ1OGU0ZDU4MTdhMTA4YzNmZDM0NjExYjgxNzkzNzJlMSJ9.s37y3oOrvetdOWQDICdwMsHIqDhUSuWpEv8hOAR2YcjUNsqiubL0nbZdGzfeQVyGUrLjmaPlo3iifT1RJIBbWA')
-            .then(usr => {
-                console.log(`created ${usr.name} under application named ${usr.application.name}`);
+        admin.permissions.get(-1)
+        var newuser = await User.create(admin, app, 'verlox2', 'godcc', new UserPermissionsArray(1))
+        console.log(`created ${newuser.username} under application named ${newuser.application.name}`);
+        
 
-                usr.permissions.set(usr.application.id, 1);
-                usr.permissions.save();
-            })
-            .catch(console.error);
+        await newuser.delete();
+        console.log(`deleted ${newuser.username}`);
+
+        // User.get('eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJ1c2VybmFtZSI6InZlcmxveCIsInBhc3N3b3JkIjoiOWRmZjY3ZjdkODdlN2RiNTFiMDMwZGEyY2VjZDhhMmQ1OGU0ZDU4MTdhMTA4YzNmZDM0NjExYjgxNzkzNzJlMSJ9.s37y3oOrvetdOWQDICdwMsHIqDhUSuWpEv8hOAR2YcjUNsqiubL0nbZdGzfeQVyGUrLjmaPlo3iifT1RJIBbWA', User.FLAGS.GET_BY_TOKEN)
+        //     .then(usr => {
+
+        //         usr.permissions.set(usr.application.id, 1);
+        //         usr.permissions.save();
+        //     })
+        //     .catch(console.error);
     }catch (e)
     {
         console.error(e);

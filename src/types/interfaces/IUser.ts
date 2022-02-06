@@ -9,5 +9,6 @@ export interface IUser extends IBase {
     password: string;
     token: string;
     hwid?: string;
-    permissions: UserPermissionsArray;//[appId: number, permissions: UserPermissions];
+    // permissions: UserPermissionsArray;//[appId: number, permissions: UserPermissions];
+    permissions: any;
 }

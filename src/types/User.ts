@@ -14,8 +14,7 @@ enum GET_FLAGS {
 
 export class User implements IUser {
     static GET_FLAGS = GET_FLAGS;
-
-    authenticated: boolean = false;
+    readonly authenticated: boolean = false;
     id: number;
     application: App;
     username: string;
@@ -26,17 +25,36 @@ export class User implements IUser {
     disabled: boolean = false;
     disableReason?: string = 'No reason';
 
+    constructor(authed?: boolean) {
+        this.authenticated = authed || false;
+    }
+
     /**
      * Recalculate the users token, good for when you change SESSION_SECRET
      */
     recalculateToken() {throw new Error('not implemented, go cry.');
-        if (!this.permissions.has(UserPermissions.FLAGS.MODIFY_USERS, this.application.id))
-            throw new Error('Invalid permissions')
+        // if (!this.permissions.has(UserPermissions.FLAGS.MODIFY_USERS, this.application.id))
+        //     throw new Error('Invalid permissions')
 
-        var token = SecurityHelper.encodeUser(this)
-        Auth.db.run('UPDATE users SET token = ? WHERE id = ?', [ this.id ], err => {
-            if (err)
-                throw err;
+        // var token = SecurityHelper.encodeUser(this)
+        // Auth.db.run('UPDATE users SET token = ? WHERE id = ?', [ this.id ], err => {
+        //     if (err)
+        //         throw err;
+        // })
+    }
+
+    /**
+     * This will delete the current user
+     */
+    delete(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            Auth.db.serialize(() => {
+                Auth.db.run('DELETE FROM users WHERE id = ?', [ this.id ]);
+                Auth.db.run('DELETE FROM applications WHERE owner_id = ?', [ this.id ]);
+                Auth.db.run('DELETE FROM permissions WHERE user_id = ?', [ this.id ]);
+
+                resolve();
+            });
         })
     }
 
@@ -58,10 +76,6 @@ export class User implements IUser {
             // Make sure the auth user has permissions
             else if (!auth.permissions.has(UserPermissions.FLAGS.CREATE_USERS, app.id))
                 return reject('Invalid permissions');
-
-            // If the user supplied a number for the permissions, translate it into a UserPermissionsArray
-            else if (typeof permissions === 'number')
-                permissions = new UserPermissionsArray(permissions);
             
             // Gotta make sure that the username isn't already taken
             Auth.db.get('SELECT id FROM users WHERE application_id = ? AND username = ?', [ app.id, username ], (err, data) => {
@@ -79,19 +93,27 @@ export class User implements IUser {
                         return reject(err); // This shit really does get repetitive don't it?
                     else if (data)
                         id = data.id + 1; // Increment the ID by 1 if there was data
-    
+
                     // Create the temp user
                     let tmpusr = new User();
                     tmpusr.id = id;
                     tmpusr.username = username;
                     tmpusr.password = SecurityHelper.hashString(password); // Fucking password hashing, SHA256.
-                    tmpusr.permissions = permissions || new UserPermissionsArray(UserPermissions.FLAGS.USER);
+
+                    // If the user supplied a number for the permissions, translate it into a UserPermissionsArray
+                    if (permissions.constructor.name === 'UserPermissionsArray') {
+                        permissions.setParent(tmpusr);
+                        tmpusr.permissions = permissions;
+                    } else if (typeof permissions === 'number')
+                        tmpusr.permissions = new UserPermissionsArray(permissions, auth);
+                    else
+                        tmpusr.permissions = new UserPermissionsArray(UserPermissions.FLAGS.USER, auth);
                         
                     // Create a token
                     var token = SecurityHelper.encodeUser(tmpusr);
     
                     // Run the database statement to insert to user into the database
-                    Auth.db.run('INSERT INTO users (id, application_id, username, password, token) VALUES (?, ?, ?, ?, ?, ?)', [ id, app.id, username, password, token ], async err => {
+                    Auth.db.run('INSERT INTO users (id, application_id, username, password, token) VALUES (?, ?, ?, ?, ?)', [ id, app.id, username, password, token ], async err => {
                         if (err)
                             return reject(err); // Nah.
                         else {
@@ -137,7 +159,7 @@ export class User implements IUser {
                 else if (row && row.owner_id == data.id)
                     omit = true;
 
-                var usr = new User();
+                var usr = new User(authed);
                 
                 try {
                     usr.application = await App.get(data.application_id, App.GET_FLAGS.GET_BY_ID, omit);
@@ -151,17 +173,16 @@ export class User implements IUser {
                 usr.username = data.username;
                 usr.token = data.token;
                 usr.hwid = data.hwid;
-                usr.permissions = new UserPermissionsArray(data.permissions);//[-1, new UserPermissions(data.permissions)];
-                usr.authenticated = authed;
-    
+                usr.permissions = new UserPermissionsArray(UserPermissions.FLAGS.USER, usr);//[-1, new UserPermissions(data.permissions)];
+
                 // Application specified permissions
                 Auth.db.all('SELECT * FROM permissions WHERE user_id = ?', [ usr.id ], (err2, row2: any) => {
                     if (err2)
                         return reject(err);
-                    else if (data) {
-                        for (var x = 0;x < data.length;x++)
-                            usr.permissions.set(row2.application_id, row2.permissions);
-    
+                    else if (row2) {
+                        for (var x = 0;x < row2.length;x++)
+                            usr.permissions.set(row2[x].application_id, row2[x].permissions);
+                        
                         return resolve(usr);
                     } else
                         return resolve(usr)
