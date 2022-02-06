@@ -24,14 +24,14 @@ var auth = new Auth({
 
 setTimeout(async() => {
     try {
-        var admin = await User.get('token', User.GET_FLAGS.GET_BY_TOKEN);
+        var admin = await User.verify('token');
         var app = await App.get(0, App.GET_FLAGS.GET_BY_ID);
 
         var newuser = await User.create(admin, app, 'verlox2', 'godcc', new UserPermissionsArray(1))
         console.log(`created ${newuser.username} under application named ${newuser.application.name}`);
         
         newuser.setUsername('testusername');
-        console.log(await newuser.save(admin));
+        await newuser.save(admin);
 
         await newuser.delete();
         console.log(`deleted ${newuser.username}`);
