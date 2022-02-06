@@ -43,7 +43,7 @@ export class UserPermissions extends BitField {
     }
 
     // WTF? this is the type of code that you find and never know the purpose of because it was recoded 10 times over
-    get (): number { 
+    get (): number {
         return this.field;
     }
 }

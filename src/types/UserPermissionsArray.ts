@@ -6,11 +6,11 @@ import { User } from './User';
 
 export class UserPermissionsArray {
 	permissions: {[key: number]: UserPermissions } = [];
-	private parentUser: User;
+	private parentUser?: User;
 
-	constructor(permissions: any) {
-		this.permissions[-1] = new UserPermissions(permissions);
-		this.parentUser = Object.getPrototypeOf(this);
+	constructor(permissions: number, parentUser?: User) {
+		this.permissions[-1] = new UserPermissions(permissions ?? FLAGS.USER);
+		this.parentUser = parentUser;
 	}
 
 	/**
@@ -22,8 +22,8 @@ export class UserPermissionsArray {
 	has(bit: number, appId: number): boolean {
 		// FUCKKKKK ILL FIX THIS LATER
 		// TODO: FUCK
-		// if (!this.parentUser || !this.parentUser.authenticated)
-		// 	return false;
+		if (!this.parentUser || !this.parentUser.authenticated)
+			return false;
 
 		// Global permissions
 		var gbf = new BitField(FLAGS, this.permissions[-1]?.field, [ FLAGS.ADMIN ]);
@@ -31,6 +31,7 @@ export class UserPermissionsArray {
 		// Application specific permissions
 		var bf = new BitField(FLAGS, this.permissions[appId]?.field, [ FLAGS.ADMIN ]);
 
+		// console.log(this.permissions[-1]?.field)
 		if (bf.has(bit) || gbf?.has(bit))
 			return true;
 		else
@@ -38,7 +39,16 @@ export class UserPermissionsArray {
 	}
 
 	/**
-	 * 
+	 * Get the permissions as a number for an app
+	 * @param appId Application ID
+	 * @returns Permissions for the app
+	 */
+	 get(appId: number = -1): UserPermissions {
+		return this.permissions[appId];
+	}
+
+	/**
+	 * Set permissions for a user for a certain app
 	 * @param appId Application ID
 	 * @param permissions Permissions flag
 	 */
@@ -50,6 +60,10 @@ export class UserPermissionsArray {
 	 * Save a user's permissions to the database
 	 */
 	save() {
+		// Make sure the user is authenticated
+		if (!this.parentUser || !this.parentUser.authenticated)
+			return;
+
 		for (var x = 0;x < Object.values(this.permissions).length;x++) {
 			let key = Object.keys(this.permissions)[x];
 			let value = Object.values(this.permissions)[x];
@@ -58,16 +72,15 @@ export class UserPermissionsArray {
 			if (!value)
 				continue;
 
-			Auth.db.run('REPLACE INTO permissions (application_id, user_id, permissions) VALUES (?, ?, ?)', [ key, this.parentUser.id, value.field ]);
+			Auth.db.run('REPLACE INTO permissions (application_id, user_id, permissions) VALUES (?, ?, ?)', [ key, this.parentUser?.id, value.field ]);
 		}
 	}
 
 	/**
-	 * Get the permissions as a number for an app
-	 * @param appId Application ID
-	 * @returns Permissions for the app
+	 * Set the new parent
+	 * @param parent
 	 */
-	get(appId: number): UserPermissions {
-		return this.permissions[appId ?? -1];
+	setParent(parent: User) {
+		this.parentUser = parent;
 	}
 }
