@@ -32,7 +32,7 @@ export class User implements IUser {
     }
 
     get format(): string {
-        return `${this.username} [UID ${this.id}] [AppID ${this.application.id}]`;
+        return `(${this.username} [UID ${this.id}] [AppID ${this.application.id}])`;
     }
 
     /**
@@ -109,7 +109,7 @@ export class User implements IUser {
      * Set the HardWare ID
      * @param hwid New HWID
      */
-    setHWID(hwid: string) {
+    setHwid(hwid: string) {
         this.#changes = true;
         this.hwid = hwid;
     }
