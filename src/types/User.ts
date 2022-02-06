@@ -31,6 +31,10 @@ export class User implements IUser {
         this.authenticated = authed || false;
     }
 
+    get format(): string {
+        return `${this.username} [UID ${this.id}] [AppID ${this.application.id}]`;
+    }
+
     /**
      * Recalculate the users token, good for when you change SESSION_SECRET
      */
@@ -43,8 +47,10 @@ export class User implements IUser {
             Auth.db.run('UPDATE users SET token = ? WHERE id = ?', [ token, this.id ], err => {
                 if (err)
                     return reject(err);
-                else
+                else {
+                    Auth.logger.debug(`Recalculated token for ${this.format}: ${token}, auth: ${auth.format}`);
                     return resolve(token);
+                }
             })
         })
     }
@@ -130,6 +136,7 @@ export class User implements IUser {
             else if (Utils.hasSpecialChars(this.username))
                 return reject('Username cannot contain special characters')
 
+            Auth.logger.debug(`Saving user information for ${this.format}, auth: ${auth.format}`);
             Auth.db.get('SELECT * FROM users WHERE username = ? AND application_id = ?', [ this.username, this.application.id ], (err, row) => {
                 if (err)
                     return reject(err);
@@ -138,16 +145,31 @@ export class User implements IUser {
 
                 // Run all the save commands
                 Auth.db.serialize(() => {
-
+                    // Set the username
                     Auth.db.run('UPDATE users SET username = ? WHERE id = ?', [ this.username, this.id ]);
+                    Auth.logger.debug('Updated username');
+
+                    // Update password
                     Auth.db.run('UPDATE users SET password = ? WHERE id = ?', [ SecurityHelper.hashString(this.password), this.id ]);
+                    Auth.logger.debug('Updated password');
+
+                    // Update disabled
                     Auth.db.run('UPDATE users SET disabled = ? WHERE id = ?', [ this.disabled ? 1 : 0, this.id ]);
+                    Auth.logger.debug('Updated disabled');
+
+                    // Update disable_reason
                     Auth.db.run('UPDATE users SET disable_reason = ? WHERE id = ?', [ this.disableReason, this.id ]);
+                    Auth.logger.debug('Updated disable_reason');
+
+                    // Update HWID
                     Auth.db.run('UPDATE users SET hwid = ? WHERE id = ?', [ this.hwid, this.id ], async () => {
+                        Auth.logger.debug('Updated HWID');
+
                         // Recalculate the token, just in case
-                        this.recalculateToken(auth);
+                        await this.recalculateToken(auth);
         
                         // Return the updated user
+                        Auth.logger.debug(`Saved user information for ${this.format}`);
                         return resolve(this);
                     });
                 });
@@ -165,6 +187,7 @@ export class User implements IUser {
                 Auth.db.run('DELETE FROM applications WHERE owner_id = ?', [ this.id ]);
                 Auth.db.run('DELETE FROM permissions WHERE user_id = ?', [ this.id ]);
 
+                Auth.logger.debug(`Deleted user ${this.format}`);
                 resolve();
             });
         })
@@ -181,6 +204,8 @@ export class User implements IUser {
      */
     static create(auth: User, app: App, username: string, password: string, permissions: UserPermissionsArray): Promise<User> {
         return new Promise<User>((resolve, reject) => {
+            Auth.logger.debug(`Creating user ${username}:${password} with global permissions level of ${permissions.get(-1).field}`);
+
             // Make sure the auth user has permissions
             if (!auth.permissions.has(UserPermissions.FLAGS.CREATE_USERS, app.id))
                 return reject('Invalid permissions');
@@ -233,8 +258,11 @@ export class User implements IUser {
                             tmpusr.permissions.setParent(tmpusr);
                             tmpusr.permissions.save();
 
+                            var user = await User.verify(token);
+                            
                             // Get the user and return it
-                            return resolve(await User.verify(token));
+                            Auth.logger.debug(`User ${user.format} was successfully created`);
+                            return resolve(user);
                         }
                     })
                 });
