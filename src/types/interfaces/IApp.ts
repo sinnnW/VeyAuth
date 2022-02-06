@@ -7,10 +7,13 @@ export interface IApp extends IBase {
     description: string;
     owner: User;
 
-    getUserCount(): number;
-    getVars(authToken: string, hwid: string): [vars: IVar];
-    setTitle(title: string): void;
+    setDisabled(disabled: boolean): void;
+    enable(): void;
+    disable(): void;
+    setName(title: string): void;
     setDescription(description: string): void;
+    getUserCount(): Promise<number>;
+    getVars(authToken: string, hwid: string): [vars: IVar];
 
     // static create(name: string, auth: User)
 }

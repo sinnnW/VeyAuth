@@ -23,18 +23,112 @@ export class App implements IApp {
 	description: string = 'No description';
 	owner : User;
 
-	// We don't use a constructor, since we have all the other methods seperated.
-	// This is my attempt at intuition or some shit
-	// - verlox @ 1/28/22
-	constructor() {}
+	#changes = false;
+    
+    /**
+	 * Enable or disable an application
+	 * @param disabled true = disabled, false = enabled
+	 */
+    setDisabled(disabled: boolean)
+    {
+        this.disabled = disabled;
+    }
 
-	// Create an application into the database
+	/**
+	 * Enable the app
+	 */
+	enable() {
+		this.setDisabled(false);
+	}
+
+	/**
+	 * Disable the app
+	 */
+	disable() {
+		this.setDisabled(true);
+	}
+
+    /**
+	 * Set the reason why an application is disabled
+	 * @param disableReason Reason
+	 */
+    setDisableReason(disableReason: string)
+    {
+        this.disableReason = disableReason;
+    }
+
+	/**
+	 * Set app name
+	 * @param name 
+	 */
+	setName(name: string)
+	{
+		if (Utils.hasSpecialChars(name))
+			throw new Error('Name cannot contain special characters');
+        this.name = name;
+	}    
+    
+	/**
+	 * Set the description for the app
+	 * @param description 
+	 */
+    setDescription(description: string)
+	{
+        this.description = description;
+	}
+
+	/**
+	 * 
+	 * @returns 
+	 */
+	save(): Promise<App> {
+		return new Promise<App>((resolve, reject) => {
+
+		})
+	}
+
+	/**
+	 * Get the amount of users in the database for the app
+	 */
+	getUserCount(): Promise<number> {
+		return new Promise<number>((resolve, reject) => {
+			Auth.db.all('SELECT * FROM users WHERE application_id = ?', (err, rows) => {
+				if (err)
+					return reject(err);
+				else
+					return resolve(rows.length || 0);
+			})
+		})
+	}
+	
+	getVars(authToken: string, hwid: string): [IVar]
+	{
+		throw new Error("Not implemented");
+	}
+
+	delete(auth: User): Promise<void> {
+		return new Promise((resolve, reject) => {
+
+		})
+	}
+
+	/**
+	 * Create an application
+	 * @param auth Auth user with permissions to create an application
+	 * @param name Name of app
+	 * @param description App description
+	 * @param subscriptionsEnabled 
+	 * @param inviteRequired 
+	 * @param hwidLocked 
+	 * @returns App created
+	 */
     static create(auth: User, name: string, description: string = "No description", subscriptionsEnabled: boolean = false, inviteRequired: boolean = false, hwidLocked: boolean = false)
     {
 		return new Promise(async (resolve, reject) => {
 			// Get authenticated user
 			User.verify(auth.token)
-				.then(user => {
+				.then(msg => {
+					var user = msg.extra;
 					// initalize in _db
 					Auth.db.serialize(() => {
 						Auth.db.get('SELECT name FROM applications WHERE name = ?', [ name ], (err: any, data: any) => {
@@ -65,51 +159,6 @@ export class App implements IApp {
 				.catch(reject);
 		})
     }
-
-    
-    // ****** IBASE SETTERS ****** //
-    // udpated disabled and store in _db
-    setDisabled(disabled: boolean)
-    {
-        this.disabled = disabled;
-        this.save();
-    }
-    // validate disableReason and store in _db
-    setDisableReason(disableReason: string)
-    {
-        if (Utils.hasSpecialChars(disableReason))
-            throw new Error('Description cannot contain special characters');
-        this.disableReason = disableReason;
-        this.save();
-    }
-
-    // ****** IAPP SETTERS ****** //
-    // validate title and store in _db
-	setTitle(name: string)
-	{
-		if (Utils.hasSpecialChars(name))
-			throw new Error('Title cannot contain special characters');
-        this.name = name;
-        this.save();
-	}    
-    // validate description and store in _db
-    setDescription(description: string)
-	{
-		if (Utils.hasSpecialChars(description))
-			throw new Error('Description cannot contain special characters');
-        this.description = description;
-        this.save();
-	}
-
-	
-	getUserCount(): number {
-		throw new Error("Not implemented");
-	}
-	
-	getVars(authToken: string, hwid: string): [IVar]
-	{
-		throw new Error("Not implemented");
-	}
 	
 	// This is the function to fetch an application from the database
 	// If the input is a string, try and fetch by name, if its a number,
@@ -128,11 +177,6 @@ export class App implements IApp {
 					return reject("Invalid identifier")
 			}
 		})
-	}
-
-	private save() {
-		throw new Error("Not implemented");
-		// Auth.db.run('UPDATE application SET title = ?, description = ?, disabled = ?, disable_reason = ')
 	}
 
 	private static fill(data: any, omitOwner: boolean) { 
