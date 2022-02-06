@@ -5,6 +5,7 @@ import { UserPermissionsArray } from './UserPermissionsArray';
 import { App } from './App';
 import { Utils } from '../utils/Utils';
 import { SecurityHelper } from '../utils/SecurityHelper';
+import { Message } from './Message';
 
 enum GET_FLAGS {
     GET_BY_ID,
@@ -258,11 +259,11 @@ export class User implements IUser {
                             tmpusr.permissions.setParent(tmpusr);
                             tmpusr.permissions.save();
 
-                            var user = await User.verify(token);
+                            var { extra } = await User.verify(token);
                             
                             // Get the user and return it
-                            Auth.logger.debug(`User ${user.format} was successfully created`);
-                            return resolve(user);
+                            Auth.logger.debug(`User ${extra.format} was successfully created`);
+                            return resolve(extra);
                         }
                     })
                 });
@@ -276,18 +277,27 @@ export class User implements IUser {
      * @param password 
      * @returns User, or the error
      */
-    static verify(username: string, password?: string): Promise<User> {
-        return new Promise<User>((resolve, reject) => {
+    static verify(username: string, password?: string): Promise<Message> {
+        return new Promise<Message>((resolve, reject) => {
+            let af = (user: User) => {
+                if (user.application.disabled)
+                    return reject(new Message(Message.CODES.APP_DISABLED, user.application.disableReason));
+                else if (user.disabled)
+                    return reject(new Message(Message.CODES.USER_DISABLED, user.disableReason));
+                else
+                    return resolve(new Message(Message.CODES.VALID_AUTH, "", JSON.stringify(user)));
+            }
+
             if (!password) {
                 // Base user information
                 Auth.db.get('SELECT * FROM users WHERE token = ?', [ username ], async (err, data) => {
                     if (err)
                         return reject(err);
                     else if (!data) // No data, unknown token
-                        return reject('Invalid auth');
+                        return reject(new Message(Message.CODES.INVALID_AUTH));
                     else
-                        return resolve(await this.fill(data, true));
-                })
+                        af(await this.fill(data, true));
+                });
             } else {
                 Auth.db.get('SELECT * FROM users WHERE username = ? AND password = ?', [ username, SecurityHelper.hashString(password) ], async (err, data) => {
                     if (err)
@@ -295,9 +305,9 @@ export class User implements IUser {
                     else if (!data)
                         return reject('Invalid auth');
                     else
-                        return resolve(await this.fill(data, true));
+                        af(await this.fill(data, true));
                 })
-            }    
+            }
         })
     }
 
