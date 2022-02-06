@@ -79,6 +79,7 @@ export class UserPermissionsArray {
 			if (!value)
 				continue;
 
+			console.log(`updating ${key} to ${value.field} for ${this.#parentUser?.id}`);
 			Auth.db.run('REPLACE INTO permissions (application_id, user_id, permissions) VALUES (?, ?, ?)', [ key, this.#parentUser?.id, value.field ]);
 		}
 	}
