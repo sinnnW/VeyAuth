@@ -33,7 +33,7 @@ export class App implements IApp {
     {
 		return new Promise(async (resolve, reject) => {
 			// Get authenticated user
-			User.get(auth.token, User.GET_FLAGS.GET_BY_TOKEN)
+			User.verify(auth.token)
 				.then(user => {
 					// initalize in _db
 					Auth.db.serialize(() => {
@@ -142,7 +142,7 @@ export class App implements IApp {
             // Set the properties from the db
 			if (!omitOwner) {
 				try {
-					app.owner = await User.get(data.owner_id, User.GET_FLAGS.GET_BY_ID);
+					app.owner = await User.get(data.owner_id);
 				} catch {}
 			}
 

@@ -123,7 +123,6 @@ export class User implements IUser {
                 return reject('Invalid permissions')
 
             // Make sure all the required fields are filled
-            console.log(this.username, this.password, this.disabled)
             else if (!this.username || !this.password || (!this.disabled && this.disabled !== false))
                 return reject('Username, password, and disabled are required.');
 
@@ -131,20 +130,28 @@ export class User implements IUser {
             else if (Utils.hasSpecialChars(this.username))
                 return reject('Username cannot contain special characters')
 
-            // Run all the save commands
-            Auth.db.serialize(() => {
-                Auth.db.run('UPDATE users SET username = ? WHERE id = ?', [ this.username, this.id ]);
-                Auth.db.run('UPDATE users SET password = ? WHERE id = ?', [ SecurityHelper.hashString(this.password), this.id ]);
-                Auth.db.run('UPDATE users SET disabled = ? WHERE id = ?', [ this.disabled ? 1 : 0, this.id ]);
-                Auth.db.run('UPDATE users SET disable_reason = ? WHERE id = ?', [ this.disableReason, this.id ]);
-                Auth.db.run('UPDATE users SET hwid = ? WHERE id = ?', [ this.hwid, this.id ], async () => {
-                    // Recalculate the token, just in case
-                    this.recalculateToken(auth);
-    
-                    // Return the updated user
-                    return resolve(this);
+            Auth.db.get('SELECT * FROM users WHERE username = ? AND application_id = ?', [ this.username, this.application.id ], (err, row) => {
+                if (err)
+                    return reject(err);
+                else if (row)
+                    return reject('Username is already taken');
+
+                // Run all the save commands
+                Auth.db.serialize(() => {
+
+                    Auth.db.run('UPDATE users SET username = ? WHERE id = ?', [ this.username, this.id ]);
+                    Auth.db.run('UPDATE users SET password = ? WHERE id = ?', [ SecurityHelper.hashString(this.password), this.id ]);
+                    Auth.db.run('UPDATE users SET disabled = ? WHERE id = ?', [ this.disabled ? 1 : 0, this.id ]);
+                    Auth.db.run('UPDATE users SET disable_reason = ? WHERE id = ?', [ this.disableReason, this.id ]);
+                    Auth.db.run('UPDATE users SET hwid = ? WHERE id = ?', [ this.hwid, this.id ], async () => {
+                        // Recalculate the token, just in case
+                        this.recalculateToken(auth);
+        
+                        // Return the updated user
+                        return resolve(this);
+                    });
                 });
-            })
+            });
         });
     }
 
@@ -174,13 +181,13 @@ export class User implements IUser {
      */
     static create(auth: User, app: App, username: string, password: string, permissions: UserPermissionsArray): Promise<User> {
         return new Promise<User>((resolve, reject) => {
-            // Make sure that username doesn't contain stupid ass unicode or special chars.
-            if (Utils.hasSpecialChars(username))
-                return reject('Username cannot contain special characters')
-
             // Make sure the auth user has permissions
-            else if (!auth.permissions.has(UserPermissions.FLAGS.CREATE_USERS, app.id))
+            if (!auth.permissions.has(UserPermissions.FLAGS.CREATE_USERS, app.id))
                 return reject('Invalid permissions');
+                
+            // Make sure that username doesn't contain stupid ass unicode or special chars.
+            else if (Utils.hasSpecialChars(username))
+                return reject('Username cannot contain special characters')
             
             // Gotta make sure that the username isn't already taken
             Auth.db.get('SELECT id FROM users WHERE application_id = ? AND username = ?', [ app.id, username ], (err, data) => {
@@ -200,7 +207,7 @@ export class User implements IUser {
                         id = data.id + 1; // Increment the ID by 1 if there was data
 
                     // Create the temp user
-                    let tmpusr = new User();
+                    let tmpusr = new User(true);
                     tmpusr.id = id;
                     tmpusr.username = username;
                     tmpusr.password = SecurityHelper.hashString(password); // Fucking password hashing, SHA256.
@@ -210,23 +217,24 @@ export class User implements IUser {
                         permissions.setParent(tmpusr);
                         tmpusr.permissions = permissions;
                     } else if (typeof permissions === 'number')
-                        tmpusr.permissions = new UserPermissionsArray(permissions, auth);
+                        tmpusr.permissions = new UserPermissionsArray(permissions);
                     else
-                        tmpusr.permissions = new UserPermissionsArray(UserPermissions.FLAGS.USER, auth);
+                        tmpusr.permissions = new UserPermissionsArray(UserPermissions.FLAGS.USER);
                         
                     // Create a token
                     var token = SecurityHelper.encodeUser(tmpusr);
     
                     // Run the database statement to insert to user into the database
-                    Auth.db.run('INSERT INTO users (id, application_id, username, password, token) VALUES (?, ?, ?, ?, ?)', [ id, app.id, username, password, token ], async err => {
+                    Auth.db.run('INSERT INTO users (id, application_id, username, password, token) VALUES (?, ?, ?, ?, ?)', [ id, app.id, username, tmpusr.password, token ], async err => {
                         if (err)
                             return reject(err); // Nah.
                         else {
                             // Save the permissions
+                            tmpusr.permissions.setParent(tmpusr);
                             tmpusr.permissions.save();
 
                             // Get the user and return it
-                            return resolve(await User.get(token, GET_FLAGS.GET_BY_TOKEN));
+                            return resolve(await User.verify(token));
                         }
                     })
                 });
@@ -235,22 +243,53 @@ export class User implements IUser {
     }
 
     /**
+     * Verify a username and password, supply token as username, and null as password to try token
+     * @param username 
+     * @param password 
+     * @returns User, or the error
+     */
+    static verify(username: string, password?: string): Promise<User> {
+        return new Promise<User>((resolve, reject) => {
+            if (!password) {
+                // Base user information
+                Auth.db.get('SELECT * FROM users WHERE token = ?', [ username ], async (err, data) => {
+                    if (err)
+                        return reject(err);
+                    else if (!data) // No data, unknown token
+                        return reject('Invalid auth');
+                    else
+                        return resolve(await this.fill(data, true));
+                })
+            } else {
+                Auth.db.get('SELECT * FROM users WHERE username = ? AND password = ?', [ username, SecurityHelper.hashString(password) ], async (err, data) => {
+                    if (err)
+                        return reject(err);
+                    else if (!data)
+                        return reject('Invalid auth');
+                    else
+                        return resolve(await this.fill(data, true));
+                })
+            }    
+        })
+    }
+
+    /**
      * Gets a user by token or ID
      * @param identifier Get by token or ID
      * @returns Promise<User> found
      */
-    static get(identifier: any, method: GET_FLAGS): Promise<User> {
-        return new Promise(async (resolve, reject) => {
-            switch (method) {
-                case GET_FLAGS.GET_BY_TOKEN:
-                    this.getByToken(identifier).then(resolve).catch(reject);
-                    break;
-                case GET_FLAGS.GET_BY_ID:
-                    this.getById(+identifier).then(resolve).catch(reject);
-                    break;
-                default:
-                    return reject('Invalid type');
-            }
+    static get(id: number): Promise<User> {
+        return new Promise((resolve, reject) => {
+            Auth.db.get('SELECT * FROM users WHERE id = ?', [ id ], async (err ,data) => {
+                if (err)
+                    return reject(err);
+                else if (!data)
+                    return reject('Unknown user');
+    
+                delete data.token;
+                delete data.password;
+                return resolve(await this.fill(data));
+            })
         })
     }
 
@@ -268,7 +307,7 @@ export class User implements IUser {
                 
                 try {
                     usr.application = await App.get(data.application_id, App.GET_FLAGS.GET_BY_ID, omit);
-                } catch (e) {console.error(e)}
+                } catch {}
                 
                 if (omit)
                     usr.application.owner = usr;
@@ -279,6 +318,7 @@ export class User implements IUser {
                 usr.hwid = data.hwid;
                 usr.permissions = new UserPermissionsArray(UserPermissions.FLAGS.USER, usr);//[-1, new UserPermissions(data.permissions)];
                 usr.token = data.token;
+                usr.password = data.password;
 
                 // Application specified permissions
                 Auth.db.all('SELECT * FROM permissions WHERE user_id = ?', [ usr.id ], (err2, row2: any) => {
@@ -295,39 +335,4 @@ export class User implements IUser {
             })
         })
     }
-
-    // Get a user by the token
-    private static async getByToken(token: string): Promise<User> {
-        return new Promise<User>((resolve, reject) => {
-            // Base user information
-            Auth.db.get('SELECT * FROM users WHERE token = ?', [ token ], async (err, data) => {
-                if (err)
-                    return reject(err);
-                else if (!data) // No data, unknown token
-                    return reject('Invalid token');
-
-                return resolve(await this.fill(data, true));
-            })
-    
-            return this;
-        })
-    }
-
-    // Get a user by ID
-    private static async getById(id: number): Promise<User> {
-        return new Promise((resolve, reject) => {
-            Auth.db.get('SELECT * FROM users WHERE id = ?', [ id ], async (err ,data) => {
-                if (err)
-                    return reject(err);
-                else if (!data)
-                    return reject('Unknown user');
-    
-                delete data.token;
-                delete data.password;
-                return resolve(await this.fill(data));
-            })
-        })
-    }
-
-    
 }
