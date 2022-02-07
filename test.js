@@ -27,10 +27,11 @@ setTimeout(async() => {
         var admin = await User.verify('token');
         var app = await App.get(0, App.GET_FLAGS.GET_BY_ID);
 
-        var newuser = await User.create(admin, app, 'verlox2', 'godcc', new UserPermissionsArray(1))
+        var newuser = await User.create(admin, app, `verlox${Math.round(Math.random() * 999)}`, 'godcc', new UserPermissionsArray(1))
+        var app = await App.create(newuser, `testapp${Math.round(Math.random() * 999)}`);
+        await app.delete(newuser);
         
-        newuser.setUsername('testusername');
-        await newuser.save(admin);
+        (await User.get(newuser.id)).delete();
 
         await newuser.delete();
 
