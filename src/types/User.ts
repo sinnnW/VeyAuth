@@ -28,6 +28,10 @@ export class User implements IUser {
 	// Internal var to detect if there is changes for saving
     #changes = false;
 
+    // Internal var for previous name, since it has to check on save()
+    
+    #prevUsername: string;
+
     constructor(authed?: boolean) {
         this.authenticated = authed || false;
     }
@@ -97,7 +101,11 @@ export class User implements IUser {
      * @param username The new username
      */
     setUsername(username: string) {
+        if (Utils.hasSpecialChars(username))
+            throw new Error('Username cannot contain special characters');
+
         this.#changes = true;
+        this.#prevUsername = this.username;
         this.username = username;
     }
     
@@ -125,6 +133,9 @@ export class User implements IUser {
      */
     save(auth: User): Promise<User> {
         return new Promise<User>((resolve, reject) => {
+            if (!this.#prevUsername)
+				this.#prevUsername = this.username;
+
             // If this is true, there are no changes to make
             if (!this.#changes)
                 return resolve(this);
@@ -145,7 +156,7 @@ export class User implements IUser {
             Auth.db.get('SELECT * FROM users WHERE username = ? AND application_id = ?', [ this.username, this.application.id ], (err, row) => {
                 if (err)
                     return reject(err);
-                else if (row)
+                else if (row && this.username != this.#prevUsername)
                     return reject('Username is already taken');
 
                 // Run all the save commands
@@ -163,7 +174,7 @@ export class User implements IUser {
                     Auth.logger.debug('Updated disabled');
 
                     // Update disable_reason
-                    Auth.db.run('UPDATE users SET disable_reason = ? WHERE id = ?', [ this.disableReason, this.id ]);
+                    Auth.db.run('UPDATE users SET disable_reason = ? WHERE id = ?', [ this.disableReason == 'No reason' ? null : this.disableReason, this.id ]);
                     Auth.logger.debug('Updated disable_reason');
 
                     // Update HWID
@@ -173,6 +184,9 @@ export class User implements IUser {
                         // Recalculate the token, just in case
                         await this.recalculateToken(auth);
         
+                        // Updates were saved
+						this.#changes = false;
+
                         // Return the updated user
                         Auth.logger.debug(`Saved user information for ${this.format}`);
                         return resolve(this);
@@ -213,10 +227,6 @@ export class User implements IUser {
      */
     static create(auth: User, app: App, username: string, password: string, permissions?: UserPermissionsArray): Promise<User> {
         return new Promise<User>((resolve, reject) => {
-            // Hash this shit off the bat
-            password = SecurityHelper.hashString(password);
-            Auth.logger.debug(`Creating user ${username}:${password} with global permissions level of ${permissions?.get(-1).field || 0}`);
-
             // Make sure the auth user has permissions
             if (!auth.permissions.has(FLAGS.CREATE_USERS, app.id))
                 return reject('Invalid permissions');
@@ -224,7 +234,11 @@ export class User implements IUser {
             // Make sure that username doesn't contain stupid ass unicode or special chars.
             else if (Utils.hasSpecialChars(username))
                 return reject('Username cannot contain special characters');
-            
+
+            // Hash this shit off the bat
+            password = SecurityHelper.hashString(password);
+            Auth.logger.debug(`Creating user ${username}:${password} with global permissions level of ${permissions?.get(-1).field || 0}`);
+
             // Gotta make sure that the username isn't already taken
             Auth.db.get('SELECT id FROM users WHERE application_id = ? AND username = ?', [ app.id, username ], (err, data) => {
                 if (err)
