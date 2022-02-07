@@ -121,7 +121,7 @@ export class User implements IUser {
 
     /**
      * Saves the user
-     * @returns Promise<User>
+     * @returns {Promise<User>} Updated user
      */
     save(auth: User): Promise<User> {
         return new Promise<User>((resolve, reject) => {
@@ -209,7 +209,7 @@ export class User implements IUser {
      * @param username
      * @param password
      * @param permissions Permissions they will have
-     * @returns Promise<User> created
+     * @returns {Promise<User>} User created
      */
     static create(auth: User, app: App, username: string, password: string, permissions?: UserPermissionsArray): Promise<User> {
         return new Promise<User>((resolve, reject) => {
@@ -285,7 +285,7 @@ export class User implements IUser {
      * Verify a username and password, supply token as username, and null as password to try token
      * @param username 
      * @param password 
-     * @returns User, or the error
+     * @returns {Promise<User>} User authed
      */
     static verify(username: string, password?: string): Promise<User> {
         return new Promise<User>((resolve, reject) => {
@@ -324,7 +324,7 @@ export class User implements IUser {
     /**
      * Gets a user by token or ID
      * @param identifier Get by token or ID
-     * @returns Promise<User> found
+     * @returns {Promise<User>} User found
      */
     static get(id: number): Promise<User> {
         return new Promise((resolve, reject) => {
