@@ -27,6 +27,9 @@ export class App implements IApp {
 
 	// Internal var to detect if there is changes for saving
 	#changes = false;
+
+	// Internal var for previous name, since it has to check on save()
+	#prevName: string;
     
 	/**
 	 * @returns {string} Formatted app name and ID
@@ -39,8 +42,7 @@ export class App implements IApp {
 	 * Enable or disable an application
 	 * @param disabled true = disabled, false = enabled
 	 */
-    setDisabled(disabled: boolean)
-    {
+    setDisabled(disabled: boolean) {
 		this.#changes = true;
         this.disabled = disabled;
     }
@@ -63,8 +65,7 @@ export class App implements IApp {
 	 * Set the reason why an application is disabled
 	 * @param disableReason Reason
 	 */
-    setDisableReason(disableReason: string)
-    {
+    setDisableReason(disableReason: string) {
 		this.#changes = true;
         this.disableReason = disableReason;
     }
@@ -73,12 +74,12 @@ export class App implements IApp {
 	 * Set app name
 	 * @param name 
 	 */
-	setName(name: string)
-	{
+	setName(name: string) {
 		if (Utils.hasSpecialChars(name))
 			throw new Error('Name cannot contain special characters');
 
 		this.#changes = true;
+		this.#prevName = this.name;
         this.name = name;
 	}    
     
@@ -86,19 +87,84 @@ export class App implements IApp {
 	 * Set the description for the app
 	 * @param description 
 	 */
-    setDescription(description: string)
-	{
+    setDescription(description: string) {
 		this.#changes = true;
         this.description = description;
 	}
 
 	/**
-	 * 
-	 * @returns 
+	 * Update the applications owner
+	 * @param newOwner The new owner
 	 */
-	save(): Promise<App> {
-		return new Promise<App>((resolve, reject) => {
+	setOwner(newOwner: User) {
+		this.#changes = true;
+		this.owner = newOwner;
+	}
 
+	/**
+	 * Save changes to the app
+	 * @params auth
+	 * @returns {Promise<App>} App changes
+	 */
+	save(auth: User): Promise<App> {
+		return new Promise<App>((resolve, reject) => {
+			if (!this.#prevName)
+				this.#prevName = this.name;
+
+			// If this is true, there are no changes to make
+            if (!this.#changes)
+                return resolve(this);
+
+            // Make sure that they have permission
+            else if (!auth?.permissions.has(FLAGS.MODIFY_USERS, this.id))
+                return reject('Invalid permissions')
+
+            // Make sure all the required fields are filled
+            else if (!this.name || !this.owner || (!this.disabled && this.disabled !== false))
+                return reject('Name, owner, and disabled are required.');
+
+            // Make sure the username doesn't contain special chars
+            else if (Utils.hasSpecialChars(this.name))
+                return reject('Name cannot contain special characters')
+
+            Auth.logger.debug(`Saving application information for ${this.format}, auth: ${auth.format}`);
+            Auth.db.get('SELECT * FROM applications WHERE name = ?', [ this.name ], (err, row) => {
+                if (err)
+                    return reject(err);
+                else if (row && this.name != this.#prevName)
+                    return reject('Name is already taken');
+
+                // Run all the save commands
+                Auth.db.serialize(() => {
+                    // Set the name
+                    Auth.db.run('UPDATE applications SET name = ? WHERE id = ?', [ this.name, this.id ]);
+                    Auth.logger.debug('Updated name');
+
+                    // Set the description
+                    Auth.db.run('UPDATE applications SET description = ? WHERE id = ?', [ this.description == 'No description' ? null : this.description, this.id ]);
+                    Auth.logger.debug('Updated description');
+
+                    // Update owner
+                    Auth.db.run('UPDATE applications SET owner_id = ? WHERE id = ?', [ this.owner.id, this.id ]);
+                    Auth.logger.debug('Updated owner');
+
+                    // Update disabled
+                    Auth.db.run('UPDATE applications SET disabled = ? WHERE id = ?', [ this.disabled ? 1 : 0, this.id ]);
+                    Auth.logger.debug('Updated disabled');
+
+                    // Update disable_reason
+                    Auth.db.run('UPDATE applications SET disable_reason = ? WHERE id = ?', [ this.disableReason == 'No reason' ? null : this.disableReason, this.id ], async () => {
+						Auth.logger.debug('Updated disable_reason');
+
+						// Updates were saved
+						this.#changes = false;
+
+						// Return the updated user
+						Auth.logger.debug(`Saved user information for ${this.format}`);
+						return resolve(this);
+					});
+                });
+            });
 		})
 	}
 
@@ -146,13 +212,16 @@ export class App implements IApp {
 	 * @param subscriptionsEnabled 
 	 * @param inviteRequired 
 	 * @param hwidLocked 
-	 * @returns App created
+	 * @returns {Promise<App>} App created
 	 */
     static create(auth: User, name: string, description?: string, subscriptionsEnabled: boolean = false, inviteRequired: boolean = false, hwidLocked: boolean = false): Promise<App> {
 		return new Promise<App>(async (resolve, reject) => {
 			Auth.logger.debug(`Creating app ${name} with owner ${auth.format}`);
-			if (!auth || !auth.permissions.has(FLAGS.CREATE_APPLICATION))
+			if (!auth?.permissions.has(FLAGS.CREATE_APPLICATION))
 				return reject('Invalid permissions');
+
+			else if (auth.application.id != -1)
+				return reject('This user must be assigned to app ID -1 to create apps');
 
 			else if (Utils.hasSpecialChars(name))
 				return reject('Name cannot contain special characters');
@@ -222,7 +291,7 @@ export class App implements IApp {
 			app.name = data.name;
 			app.description = data.description || 'No description';
 			app.disabled = data.disabled == 1 ? true : false;
-			app.disableReason = data.disable_reason;
+			app.disableReason = data.disable_reason || 'No reason';
 			app.allowUserSelfDeletion = data.allow_user_self_deletion == 1 ? true : false;
 
 			return resolve(app);
