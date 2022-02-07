@@ -11,26 +11,28 @@ export class Auth {
 	static logger: Logger;
 
 	constructor(loggerOpts: LoggerOptions) {
+		Auth.logger = createLogger(loggerOpts);
+		Auth.logger.info('Starting VeyAuth by verlox...');
+		Auth.db = new Database(`${__dirname}/auth.db`);
+
 		// Load .env vars
 		config();
 
-		Auth.logger = createLogger(loggerOpts);
-		Auth.db = new Database(`${__dirname}/auth.db`);
-
-		Auth.logger.info('Setting up tables...');
-		
 		//#region Setup database
-		// TODO: Setup a default user
-		
-		// Applications table
-		Auth.db.run('CREATE TABLE IF NOT EXISTS "applications" ("id" INTEGER,"owner_id" INTEGER,"name" TEXT,"description" TEXT,"disabled" INTEGER DEFAULT 0,"disable_reason" TEXT DEFAULT "No reason","subscriptions_enabled" INTEGER DEFAULT 0,"invite_required" INTEGER DEFAULT 0,"hwid_locked" INTEGER DEFAULT 0,PRIMARY KEY("id"))');
-		
-		// User table
-		Auth.db.run('CREATE TABLE IF NOT EXISTS "users" ("id" INTEGER, "application_id" INTEGER, "username" INTEGER, "password" TEXT, "token" TEXT NOT NULL, "disabled" INTEGER NOT NULL DEFAULT 0, "disable_reason" TEXT DEFAULT "No reason",  PRIMARY KEY("application_id","id"))');
-		
-		// Permissions table
-		Auth.db.run('CREATE TABLE IF NOT EXISTS "permissions" ("application_id" INTEGER NOT NULL, "user_id" INTEGER NOT NULL, "permissions" INTEGER, PRIMARY KEY("application_id","user_id"))');
+		Auth.logger.info('Setting up tables and data...');
+		Auth.db.serialize(() => {
+			// Applications table
+			Auth.db.run('CREATE TABLE IF NOT EXISTS "applications" ("id" INTEGER,"owner_id" INTEGER,"name" TEXT,"description" TEXT,"disabled" INTEGER DEFAULT 0,"disable_reason" TEXT DEFAULT "No reason","subscriptions_enabled" INTEGER DEFAULT 0,"invite_required" INTEGER DEFAULT 0,"hwid_locked" INTEGER DEFAULT 0,PRIMARY KEY("id"))');
+			
+			// User table
+			Auth.db.run('CREATE TABLE IF NOT EXISTS "users" ("id" INTEGER, "application_id" INTEGER, "username" INTEGER, "password" TEXT, "token" TEXT NOT NULL, "disabled" INTEGER NOT NULL DEFAULT 0, "disable_reason" TEXT DEFAULT "No reason",  PRIMARY KEY("application_id","id"))');
+			
+			// Permissions table
+			Auth.db.run('CREATE TABLE IF NOT EXISTS "permissions" ("application_id" INTEGER NOT NULL, "user_id" INTEGER NOT NULL, "permissions" INTEGER, PRIMARY KEY("application_id","user_id"))');
 
+			// Create a application named Global, this is the global permissions
+			Auth.db.run('INSERT OR IGNORE INTO applications (id, name) VALUES (-1, "Global")');
+		});
 		//#endregion
 
 		// Check all the environmental vars, if they don't exist, create them
@@ -61,6 +63,5 @@ export class Auth {
 }
 
 // Other modules export last, since database needs to be initialized
-// TODO: fucking export under Auth alias
 export { App } from './types/App';
 export { User } from './types/User';

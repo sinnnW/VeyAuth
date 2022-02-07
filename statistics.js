@@ -50,7 +50,7 @@ function loadFilesInFolder(directory)
 			let content = fs.readFileSync(`${directory}/${file}`).toString();
 			counters.chars += content.length;
 			counters.lines += content.split("\n").length;
-			console.log(`Adding ${counters.lines} lines and ${counters.chars} chars to counter (${directory}/${file})`, "statistics.log");
+			console.log(`Adding ${content.split("\n").length} lines and ${content.length} chars to counter (${directory}/${file})`, "statistics.log");
 		}
   });
 

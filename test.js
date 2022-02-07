@@ -29,11 +29,12 @@ setTimeout(async() => {
 
         var newuser = await User.create(admin, app, `verlox${Math.round(Math.random() * 999)}`, 'godcc', new UserPermissionsArray(1))
         var app = await App.create(newuser, `testapp${Math.round(Math.random() * 999)}`);
-        await app.delete(newuser);
         
-        (await User.get(newuser.id)).delete();
-
-        await newuser.delete();
+        app.setOwner(admin);
+        await app.save(admin);
+        
+        // await app.delete(newuser);
+        // await newuser.delete();
 
         // User.get('eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJ1c2VybmFtZSI6InZlcmxveCIsInBhc3N3b3JkIjoiOWRmZjY3ZjdkODdlN2RiNTFiMDMwZGEyY2VjZDhhMmQ1OGU0ZDU4MTdhMTA4YzNmZDM0NjExYjgxNzkzNzJlMSJ9.s37y3oOrvetdOWQDICdwMsHIqDhUSuWpEv8hOAR2YcjUNsqiubL0nbZdGzfeQVyGUrLjmaPlo3iifT1RJIBbWA', User.FLAGS.GET_BY_TOKEN)
         //     .then(usr => {
