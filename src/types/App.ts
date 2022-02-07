@@ -160,7 +160,7 @@ export class App implements IApp {
 						this.#changes = false;
 
 						// Return the updated user
-						Auth.logger.debug(`Saved user information for ${this.format}`);
+						Auth.logger.debug(`Saved application information for ${this.format}`);
 						return resolve(this);
 					});
                 });
