@@ -29,7 +29,7 @@ export class User implements IUser {
     #changes = false;
 
     // Internal var for previous name, since it has to check on save()
-    
+
     #prevUsername: string;
 
     constructor(authed?: boolean) {
@@ -230,6 +230,10 @@ export class User implements IUser {
             // Make sure the auth user has permissions
             if (!auth.permissions.has(FLAGS.CREATE_USERS, app.id))
                 return reject('Invalid permissions');
+
+            // Only allow users to create users in their own application unless they are global users
+            else if (auth.application.id != -1 && auth.application.id != app.id)
+                return reject('You can only create users in your own application');
                 
             // Make sure that username doesn't contain stupid ass unicode or special chars.
             else if (Utils.hasSpecialChars(username))
@@ -258,38 +262,38 @@ export class User implements IUser {
 
                     // Create the temp user
                     let tmpusr = new User(true);
+                    tmpusr.application = app;
                     tmpusr.id = id;
                     tmpusr.username = username;
                     tmpusr.password = password; // Fucking password hashing, SHA256.
 
                     // If the user supplied a number for the permissions, translate it into a UserPermissionsArray
-                    if (permissions?.constructor.name === 'UserPermissionsArray') {
-                        permissions.setParent(tmpusr);
+                    if (permissions?.constructor.name === 'UserPermissionsArray')
                         tmpusr.permissions = permissions;
-                    } else if (typeof permissions === 'number')
+                    else if (typeof permissions === 'number')
                         tmpusr.permissions = new UserPermissionsArray(permissions);
                     else
                         tmpusr.permissions = new UserPermissionsArray(FLAGS.USER);
                         
-                    // Create a token
-                    var token = SecurityHelper.encodeUser(tmpusr);
-    
-                    // Run the database statement to insert to user into the database
-                    Auth.db.run('INSERT INTO users (id, application_id, username, password, token) VALUES (?, ?, ?, ?, ?)', [ id, app.id, username, tmpusr.password, token ], async err => {
-                        if (err)
-                            return reject(err); // Nah.
-                        else {
-                            // Save the permissions
-                            tmpusr.permissions.setParent(tmpusr);
-                            tmpusr.permissions.save();
-
-                            var user = await User.verify(token);
-                            
-                            // Get the user and return it
-                            Auth.logger.debug(`User ${user.format} was successfully created`);
-                            return resolve(user);
-                        }
-                    })
+                    // Save the permissions
+                    tmpusr.permissions.setParent(tmpusr);
+                    tmpusr.permissions.save(auth).then(() => {
+                        // Create a token
+                        var token = SecurityHelper.encodeUser(tmpusr);
+        
+                        // Run the database statement to insert to user into the database
+                        Auth.db.run('INSERT INTO users (id, application_id, username, password, token) VALUES (?, ?, ?, ?, ?)', [ id, app.id, username, tmpusr.password, token ], async err => {
+                            if (err)
+                                return reject(err); // Nah.
+                            else {
+                                var user = await User.verify(token);
+                                
+                                // Get the user and return it
+                                Auth.logger.debug(`User ${user.format} was successfully created`);
+                                return resolve(user);
+                            }
+                        })
+                    }).catch(reject)
                 });
             })
         });
@@ -390,6 +394,8 @@ export class User implements IUser {
                         for (var x = 0;x < row2.length;x++)
                             usr.permissions.set(row2[x].application_id, row2[x].permissions);
                         
+                        // Lock in the permissions and return the user
+                        usr.permissions.lockPermissions();
                         return resolve(usr);
                     } else
                         return resolve(usr)
