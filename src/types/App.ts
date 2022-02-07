@@ -185,49 +185,8 @@ export class App implements IApp {
 							}
 						})
 					})
-					});
 				});
-
-
-
-			// // Get authenticated user
-			// User.verify(auth.token)
-			// 	.then(msg => {
-			// 		var user = msg.extra;
-			// 		// initalize in _db
-			// 		Auth.db.serialize(() => {
-			// 			Auth.db.get('SELECT name FROM applications WHERE name = ?', [ name ], (err: any, data: any) => {
-			// 				if (err)
-			// 					return reject(err);
-			// 				// if it already exists, throw an error
-			// 				else if (data)
-			// 					return reject('Application already exists');
-			// 			});
-						
-			// 			var id: number = 0;
-			// 			Auth.db.get("SELECT id FROM applications ORDER BY id DESC", (err, data) => {
-			// 				if (err)
-			// 					return reject(err);
-			// 				else if (data)
-			// 					id = data.id + 1;
-			
-			// 				// Create application
-			// 				Auth.db.run("INSERT INTO applications (id, owner_id, name, description, subscriptions_enabled, invite_required, hwid_locked) VALUES (?, ?, ?, ?, ?, ?, ?)", [ id, user.id, name, description, subscriptionsEnabled, inviteRequired, hwidLocked], err => {
-			// 					if (err)
-			// 						return reject(err);
-			// 					else
-			// 						App.get(id, GET_FLAGS.GET_BY_ID)
-			// 							.then(app => {
-			// 								return resolve(new Message(Message.CODES.APP_CREATED, null, app))
-			// 							})
-			// 							.catch(e => {
-											
-			// 							});
-			// 				});
-			// 			})
-			// 		});
-			// 	})
-			// 	.catch(reject);
+			});
 		})
     }
 	
