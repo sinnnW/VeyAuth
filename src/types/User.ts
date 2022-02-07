@@ -45,7 +45,7 @@ export class User implements IUser {
      */
     recalculateToken(auth: User): Promise<string> {
         return new Promise<string>((resolve, reject) => {
-            if (!auth || !auth.permissions.has(FLAGS.MODIFY_USERS, this.application.id))
+            if (!auth?.permissions.has(FLAGS.MODIFY_USERS, this.application.id))
                 return reject('Invalid permissions')
     
             var token = SecurityHelper.encodeUser(this)
