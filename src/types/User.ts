@@ -1,6 +1,6 @@
 import { Auth } from '..';
 import { IUser } from './interfaces/IUser';
-import { UserPermissions } from './UserPermissions';
+import { FLAGS } from './UserPermissions';
 import { UserPermissionsArray } from './UserPermissionsArray';
 import { App } from './App';
 import { Utils } from '../utils/Utils';
@@ -26,22 +26,27 @@ export class User implements IUser {
     disableReason?: string = 'No reason';
     application: App;
     
+	// Internal var to detect if there is changes for saving
     #changes = false;
 
     constructor(authed?: boolean) {
         this.authenticated = authed || false;
     }
 
+    /**
+     * @returns {string} Formatted username, ID, and app ID
+     */
     get format(): string {
         return `(${this.username} [UID ${this.id}] [AppID ${this.application.id}])`;
     }
 
     /**
      * Recalculate the users token, good for when you change SESSION_SECRET
+     * @param auth
      */
     recalculateToken(auth: User): Promise<string> {
         return new Promise<string>((resolve, reject) => {
-            if (!auth || !auth.permissions.has(UserPermissions.FLAGS.MODIFY_USERS, this.application.id))
+            if (!auth || !auth.permissions.has(FLAGS.MODIFY_USERS, this.application.id))
                 return reject('Invalid permissions')
     
             var token = SecurityHelper.encodeUser(this)
@@ -126,7 +131,7 @@ export class User implements IUser {
                 return resolve(this);
 
             // Make sure that they have permission
-            else if (!auth || !auth.permissions.has(UserPermissions.FLAGS.MODIFY_USERS, this.application.id))
+            else if (!auth || !auth.permissions.has(FLAGS.MODIFY_USERS, this.application.id))
                 return reject('Invalid permissions')
 
             // Make sure all the required fields are filled
@@ -180,16 +185,20 @@ export class User implements IUser {
 
     /**
      * This will delete the current user
+     * @param User User with permission to delete their profile
      */
-    delete(): Promise<void> {
+    delete(auth: User): Promise<void> {
         return new Promise((resolve, reject) => {
+            if (!auth?.permissions.has(FLAGS.DELETE_USERS) && !(this.application.allowUserSelfDeletion && this.authenticated))
+                return reject('Invalid permissions');
+
             Auth.db.serialize(() => {
                 Auth.db.run('DELETE FROM users WHERE id = ?', [ this.id ]);
                 Auth.db.run('DELETE FROM applications WHERE owner_id = ?', [ this.id ]);
-                Auth.db.run('DELETE FROM permissions WHERE user_id = ?', [ this.id ]);
-
-                Auth.logger.debug(`Deleted user ${this.format}`);
-                resolve();
+                Auth.db.run('DELETE FROM permissions WHERE user_id = ?', [ this.id ], () => {
+                    Auth.logger.debug(`Deleted user ${this.format}`);
+                    resolve();
+                });
             });
         })
     }
@@ -203,24 +212,26 @@ export class User implements IUser {
      * @param permissions Permissions they will have
      * @returns Promise<User> created
      */
-    static create(auth: User, app: App, username: string, password: string, permissions: UserPermissionsArray): Promise<User> {
+    static create(auth: User, app: App, username: string, password: string, permissions?: UserPermissionsArray): Promise<User> {
         return new Promise<User>((resolve, reject) => {
-            Auth.logger.debug(`Creating user ${username}:${password} with global permissions level of ${permissions.get(-1).field}`);
+            // Hash this shit off the bat
+            password = SecurityHelper.hashString(password);
+            Auth.logger.debug(`Creating user ${username}:${password} with global permissions level of ${permissions?.get(-1).field || 0}`);
 
             // Make sure the auth user has permissions
-            if (!auth.permissions.has(UserPermissions.FLAGS.CREATE_USERS, app.id))
+            if (!auth.permissions.has(FLAGS.CREATE_USERS, app.id))
                 return reject('Invalid permissions');
                 
             // Make sure that username doesn't contain stupid ass unicode or special chars.
             else if (Utils.hasSpecialChars(username))
-                return reject('Username cannot contain special characters')
+                return reject('Username cannot contain special characters');
             
             // Gotta make sure that the username isn't already taken
             Auth.db.get('SELECT id FROM users WHERE application_id = ? AND username = ?', [ app.id, username ], (err, data) => {
                 if (err)
                     return reject(err); // Some shitass error.
-                else if (data) // Thats not good
-                    return reject('Username is already taken');
+                else if (data)
+                    return reject('Username is taken');
 
                 // Fallback ID is 0
                 var id = 0;
@@ -236,16 +247,16 @@ export class User implements IUser {
                     let tmpusr = new User(true);
                     tmpusr.id = id;
                     tmpusr.username = username;
-                    tmpusr.password = SecurityHelper.hashString(password); // Fucking password hashing, SHA256.
+                    tmpusr.password = password; // Fucking password hashing, SHA256.
 
                     // If the user supplied a number for the permissions, translate it into a UserPermissionsArray
-                    if (permissions.constructor.name === 'UserPermissionsArray') {
+                    if (permissions?.constructor.name === 'UserPermissionsArray') {
                         permissions.setParent(tmpusr);
                         tmpusr.permissions = permissions;
                     } else if (typeof permissions === 'number')
                         tmpusr.permissions = new UserPermissionsArray(permissions);
                     else
-                        tmpusr.permissions = new UserPermissionsArray(UserPermissions.FLAGS.USER);
+                        tmpusr.permissions = new UserPermissionsArray(FLAGS.USER);
                         
                     // Create a token
                     var token = SecurityHelper.encodeUser(tmpusr);
@@ -259,11 +270,11 @@ export class User implements IUser {
                             tmpusr.permissions.setParent(tmpusr);
                             tmpusr.permissions.save();
 
-                            var { extra } = await User.verify(token);
+                            var user = await User.verify(token);
                             
                             // Get the user and return it
-                            Auth.logger.debug(`User ${extra.format} was successfully created`);
-                            return resolve(extra);
+                            Auth.logger.debug(`User ${user.format} was successfully created`);
+                            return resolve(user);
                         }
                     })
                 });
@@ -277,15 +288,15 @@ export class User implements IUser {
      * @param password 
      * @returns User, or the error
      */
-    static verify(username: string, password?: string): Promise<Message> {
-        return new Promise<Message>((resolve, reject) => {
+    static verify(username: string, password?: string): Promise<User> {
+        return new Promise<User>((resolve, reject) => {
             let af = (user: User) => {
                 if (user.application.disabled)
-                    return reject(new Message(Message.CODES.APP_DISABLED, user.application.disableReason));
+                    return reject(user.application.disableReason || 'No reason');
                 else if (user.disabled)
-                    return reject(new Message(Message.CODES.USER_DISABLED, user.disableReason));
+                    return reject(user.disableReason || 'No reason');
                 else
-                    return resolve(new Message(Message.CODES.VALID_AUTH, "", JSON.stringify(user)));
+                    return resolve(user);
             }
 
             if (!password) {
@@ -294,7 +305,7 @@ export class User implements IUser {
                     if (err)
                         return reject(err);
                     else if (!data) // No data, unknown token
-                        return reject(new Message(Message.CODES.INVALID_AUTH));
+                        return reject('Invalid auth');
                     else
                         af(await this.fill(data, true));
                 });
@@ -354,7 +365,7 @@ export class User implements IUser {
                 usr.id = data.id;
                 usr.username = data.username;
                 usr.hwid = data.hwid;
-                usr.permissions = new UserPermissionsArray(UserPermissions.FLAGS.USER, usr);//[-1, new UserPermissions(data.permissions)];
+                usr.permissions = new UserPermissionsArray(FLAGS.USER, usr);//[-1, new UserPermissions(data.permissions)];
                 usr.token = data.token;
                 usr.password = data.password;
 

@@ -21,5 +21,5 @@ export interface IUser extends IBase {
     setPassword(password: string): void;
     setHwid(hwid: string): void;
     save(auth: User): Promise<User>;
-    delete(): Promise<void>;
+    delete(auth: User): Promise<void>;
 }
