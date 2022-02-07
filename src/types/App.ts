@@ -4,7 +4,6 @@ import { User } from './User';
 import { Auth } from '..';
 import { Utils } from '../utils/Utils';
 import { FLAGS } from './UserPermissions';
-import { Message } from './Message';
 
 enum GET_FLAGS {
 	GET_BY_ID,

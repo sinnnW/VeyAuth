@@ -5,7 +5,6 @@ import { UserPermissionsArray } from './UserPermissionsArray';
 import { App } from './App';
 import { Utils } from '../utils/Utils';
 import { SecurityHelper } from '../utils/SecurityHelper';
-import { Message } from './Message';
 
 enum GET_FLAGS {
     GET_BY_ID,
