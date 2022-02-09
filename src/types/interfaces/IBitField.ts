@@ -1,7 +1,7 @@
 export interface IBitField {
-    field: number;
-    overrides: [any];
-    FLAGS: any;
+  field: number;
+  overrides: [any];
+  FLAGS: any;
 
-    has(bit: number): boolean;
+  has(bit: number): boolean;
 }

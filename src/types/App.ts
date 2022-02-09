@@ -14,15 +14,15 @@ export class App implements IApp {
 	// FLAGS
 	static GET_FLAGS = GET_FLAGS;
 
-    // IBase fields
+	// IBase fields
 	id: number;
 	disabled: boolean;
 	disableReason?: string;
 
-    // IApp fields
+	// IApp fields
 	name: string;
 	description: string;
-	owner : User;
+	owner: User;
 	allowUserSelfDeletion: boolean;
 
 	// Internal var to detect if there is changes for saving
@@ -30,130 +30,130 @@ export class App implements IApp {
 
 	// Internal var for previous name, since it has to check on save()
 	#prevName: string;
-    
+
 	/**
-	 * @returns {string} Formatted app name and ID
-	 */
+	* @returns {string} Formatted app name and ID
+	*/
 	get format(): string {
 		return `(${this.name} [AppID ${this.id}])`;
 	}
 
-    /**
-	 * Enable or disable an application
-	 * @param disabled true = disabled, false = enabled
-	 */
-    setDisabled(disabled: boolean) {
+	/**
+	* Enable or disable an application
+	* @param disabled true = disabled, false = enabled
+	*/
+	setDisabled(disabled: boolean) {
 		this.#changes = true;
-        this.disabled = disabled;
-    }
+		this.disabled = disabled;
+	}
 
 	/**
-	 * Enable the app
-	 */
+	* Enable the app
+	*/
 	enable() {
 		this.setDisabled(false);
 	}
 
 	/**
-	 * Disable the app
-	 */
+	* Disable the app
+	*/
 	disable() {
 		this.setDisabled(true);
 	}
 
-    /**
-	 * Set the reason why an application is disabled
-	 * @param disableReason Reason
-	 */
-    setDisableReason(disableReason: string) {
+	/**
+	* Set the reason why an application is disabled
+	* @param disableReason Reason
+	*/
+	setDisableReason(disableReason: string) {
 		this.#changes = true;
-        this.disableReason = disableReason;
-    }
+		this.disableReason = disableReason;
+	}
 
 	/**
-	 * Set app name
-	 * @param name 
-	 */
+	* Set app name
+	* @param name 
+	*/
 	setName(name: string) {
 		if (Utils.hasSpecialChars(name))
 			throw new Error('Name cannot contain special characters');
 
 		this.#changes = true;
 		this.#prevName = this.name;
-        this.name = name;
-	}    
-    
-	/**
-	 * Set the description for the app
-	 * @param description 
-	 */
-    setDescription(description: string) {
-		this.#changes = true;
-        this.description = description;
+		this.name = name;
 	}
 
 	/**
-	 * Update the applications owner
-	 * @param newOwner The new owner
-	 */
+	* Set the description for the app
+	* @param description 
+	*/
+	setDescription(description: string) {
+		this.#changes = true;
+		this.description = description;
+	}
+
+	/**
+	* Update the applications owner
+	* @param newOwner The new owner
+	*/
 	setOwner(newOwner: User) {
 		this.#changes = true;
 		this.owner = newOwner;
 	}
 
 	/**
-	 * Save changes to the app
-	 * @params auth
-	 * @returns {Promise<App>} App changes
-	 */
+	* Save changes to the app
+	* @params auth
+	* @returns {Promise<App>} App changes
+	*/
 	save(auth: User): Promise<App> {
 		return new Promise<App>((resolve, reject) => {
 			if (!this.#prevName)
 				this.#prevName = this.name;
 
 			// If this is true, there are no changes to make
-            if (!this.#changes)
-                return resolve(this);
+			if (!this.#changes)
+				return resolve(this);
 
-            // Make sure that they have permission
-            else if (!auth?.permissions.has(FLAGS.MODIFY_USERS, this.id))
-                return reject('Invalid permissions')
+			// Make sure that they have permission
+			else if (!auth?.permissions.has(FLAGS.MODIFY_USERS, this.id))
+				return reject('Invalid permissions')
 
-            // Make sure all the required fields are filled
-            else if (!this.name || !this.owner || (!this.disabled && this.disabled !== false))
-                return reject('Name, owner, and disabled are required.');
+			// Make sure all the required fields are filled
+			else if (!this.name || !this.owner || (!this.disabled && this.disabled !== false))
+				return reject('Name, owner, and disabled are required.');
 
-            // Make sure the username doesn't contain special chars
-            else if (Utils.hasSpecialChars(this.name))
-                return reject('Name cannot contain special characters')
+			// Make sure the username doesn't contain special chars
+			else if (Utils.hasSpecialChars(this.name))
+				return reject('Name cannot contain special characters')
 
-            Auth.logger.debug(`Saving application information for ${this.format}, auth: ${auth.format}`);
-            Auth.db.get('SELECT * FROM applications WHERE name = ?', [ this.name ], (err, row) => {
-                if (err)
-                    return reject(err);
-                else if (row && this.name != this.#prevName)
-                    return reject('Name is already taken');
+			Auth.logger.debug(`Saving application information for ${this.format}, auth: ${auth.format}`);
+			Auth.db.get('SELECT * FROM applications WHERE name = ?', [this.name], (err, row) => {
+				if (err)
+					return reject(err);
+				else if (row && this.name != this.#prevName)
+					return reject('Name is already taken');
 
-                // Run all the save commands
-                Auth.db.serialize(() => {
-                    // Set the name
-                    Auth.db.run('UPDATE applications SET name = ? WHERE id = ?', [ this.name, this.id ]);
-                    Auth.logger.debug('Updated name');
+				// Run all the save commands
+				Auth.db.serialize(() => {
+					// Set the name
+					Auth.db.run('UPDATE applications SET name = ? WHERE id = ?', [this.name, this.id]);
+					Auth.logger.debug('Updated name');
 
-                    // Set the description
-                    Auth.db.run('UPDATE applications SET description = ? WHERE id = ?', [ this.description == 'No description' ? null : this.description, this.id ]);
-                    Auth.logger.debug('Updated description');
+					// Set the description
+					Auth.db.run('UPDATE applications SET description = ? WHERE id = ?', [this.description == 'No description' ? null : this.description, this.id]);
+					Auth.logger.debug('Updated description');
 
-                    // Update owner
-                    Auth.db.run('UPDATE applications SET owner_id = ? WHERE id = ?', [ this.owner.id, this.id ]);
-                    Auth.logger.debug('Updated owner');
+					// Update owner
+					Auth.db.run('UPDATE applications SET owner_id = ? WHERE id = ?', [this.owner.id, this.id]);
+					Auth.logger.debug('Updated owner');
 
-                    // Update disabled
-                    Auth.db.run('UPDATE applications SET disabled = ? WHERE id = ?', [ this.disabled ? 1 : 0, this.id ]);
-                    Auth.logger.debug('Updated disabled');
+					// Update disabled
+					Auth.db.run('UPDATE applications SET disabled = ? WHERE id = ?', [this.disabled ? 1 : 0, this.id]);
+					Auth.logger.debug('Updated disabled');
 
-                    // Update disable_reason
-                    Auth.db.run('UPDATE applications SET disable_reason = ? WHERE id = ?', [ this.disableReason == 'No reason' ? null : this.disableReason, this.id ], async () => {
+					// Update disable_reason
+					Auth.db.run('UPDATE applications SET disable_reason = ? WHERE id = ?', [this.disableReason == 'No reason' ? null : this.disableReason, this.id], async () => {
 						Auth.logger.debug('Updated disable_reason');
 
 						// Updates were saved
@@ -163,14 +163,14 @@ export class App implements IApp {
 						Auth.logger.debug(`Saved application information for ${this.format}`);
 						return resolve(this);
 					});
-                });
-            });
+				});
+			});
 		})
 	}
 
 	/**
-	 * Get the amount of users in the database for the app
-	 */
+	* Get the amount of users in the database for the app
+	*/
 	getUserCount(): Promise<number> {
 		return new Promise<number>((resolve, reject) => {
 			Auth.db.all('SELECT * FROM users WHERE application_id = ?', (err, rows) => {
@@ -181,9 +181,8 @@ export class App implements IApp {
 			})
 		})
 	}
-	
-	getVars(authToken: string, hwid: string): [IVar]
-	{
+
+	getVars(authToken: string, hwid: string): [IVar] {
 		throw new Error("Not implemented");
 	}
 
@@ -192,11 +191,11 @@ export class App implements IApp {
 			// Make sure user has permission
 			if (!auth?.permissions.has(FLAGS.MODIFY_USERS, this.id))
 				return reject('Invalid permissions');
-			
+
 			Auth.db.serialize(() => {
-				Auth.db.run('DELETE FROM applications WHERE id = ?', [ this.id ]);
-				Auth.db.run('DELETE FROM users WHERE application_id = ?', [ this.id ]);
-				Auth.db.run('DELETE FROM permissions WHERE application_id = ?', [ this.id ], () => {
+				Auth.db.run('DELETE FROM applications WHERE id = ?', [this.id]);
+				Auth.db.run('DELETE FROM users WHERE application_id = ?', [this.id]);
+				Auth.db.run('DELETE FROM permissions WHERE application_id = ?', [this.id], () => {
 					Auth.logger.debug(`Deleted application ${this.format}`);
 					resolve();
 				});
@@ -205,16 +204,16 @@ export class App implements IApp {
 	}
 
 	/**
-	 * Create an application
-	 * @param auth Auth user with permissions to create an application
-	 * @param name Name of app
-	 * @param description App description
-	 * @param subscriptionsEnabled 
-	 * @param inviteRequired 
-	 * @param hwidLocked 
-	 * @returns {Promise<App>} App created
-	 */
-    static create(auth: User, name: string, description?: string, subscriptionsEnabled: boolean = false, inviteRequired: boolean = false, hwidLocked: boolean = false): Promise<App> {
+	* Create an application
+	* @param auth Auth user with permissions to create an application
+	* @param name Name of app
+	* @param description App description
+	* @param subscriptionsEnabled 
+	* @param inviteRequired 
+	* @param hwidLocked 
+	* @returns {Promise<App>} App created
+	*/
+	static create(auth: User, name: string, description?: string, subscriptionsEnabled: boolean = false, inviteRequired: boolean = false, hwidLocked: boolean = false): Promise<App> {
 		return new Promise<App>(async (resolve, reject) => {
 			Auth.logger.debug(`Creating app ${name} with owner ${auth.format}`);
 			if (!auth?.permissions.has(FLAGS.CREATE_APPLICATION))
@@ -229,7 +228,7 @@ export class App implements IApp {
 			var id = 1;
 			Auth.db.serialize(() => {
 				// Make sure name isnt taken
-				Auth.db.get('SELECT name FROM applications WHERE name = ?', [ name ], (err, data) => {
+				Auth.db.get('SELECT name FROM applications WHERE name = ?', [name], (err, data) => {
 					if (err)
 						return reject(err);
 					else if (data)
@@ -241,9 +240,9 @@ export class App implements IApp {
 							return reject(err);
 						else
 							id += data.id || 0;
-	
+
 						// Create the actual application
-						Auth.db.run('INSERT INTO applications (id, owner_id, name, description, subscriptions_enabled, invite_required, hwid_locked) VALUES (?, ?, ?, ?, ?, ?, ?)', [ id, auth.id, name, description, subscriptionsEnabled, inviteRequired, hwidLocked ], async err => {
+						Auth.db.run('INSERT INTO applications (id, owner_id, name, description, subscriptions_enabled, invite_required, hwid_locked) VALUES (?, ?, ?, ?, ?, ?, ?)', [id, auth.id, name, description, subscriptionsEnabled, inviteRequired, hwidLocked], async err => {
 							if (err)
 								return reject(err);
 							else {
@@ -256,8 +255,8 @@ export class App implements IApp {
 				});
 			});
 		})
-    }
-	
+	}
+
 	// This is the function to fetch an application from the database
 	// If the input is a string, try and fetch by name, if its a number,
 	// try and fetch by name, else, reject.
@@ -276,15 +275,15 @@ export class App implements IApp {
 		})
 	}
 
-	private static fill(data: any, omitOwner: boolean) { 
+	private static fill(data: any, omitOwner: boolean) {
 		return new Promise<App>(async (resolve, reject) => {
 			var app = new App();
-    
-            // Set the properties from the db
+
+			// Set the properties from the db
 			if (!omitOwner) {
 				try {
 					app.owner = await User.get(data.owner_id);
-				} catch {}
+				} catch { }
 			}
 
 			app.id = data.id;
@@ -298,10 +297,10 @@ export class App implements IApp {
 		})
 	}
 
-    private static getById(id: number, omitOwner: boolean): Promise<App> {
+	private static getById(id: number, omitOwner: boolean): Promise<App> {
 		return new Promise<App>((resolve, reject) => {
 			// check if application already exists in _db
-			Auth.db.get('SELECT * FROM applications WHERE id = ?', [ id ], (err, data) => {
+			Auth.db.get('SELECT * FROM applications WHERE id = ?', [id], (err, data) => {
 				if (err)
 					throw err;
 				// if it doesn't exist, throw an error
@@ -315,7 +314,7 @@ export class App implements IApp {
 
 	private static getByName(name: string, omitOwner: boolean): Promise<App> {
 		return new Promise<App>((resolve, reject) => {
-			Auth.db.get('SELECT * FROM applications WHERE name = ?', [ name ], (err, data) => {
+			Auth.db.get('SELECT * FROM applications WHERE name = ?', [name], (err, data) => {
 				if (err)
 					return reject(err)
 				else if (!data)

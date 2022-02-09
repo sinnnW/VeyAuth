@@ -1,65 +1,63 @@
 import { Database } from 'sqlite3';
-import fs from 'fs';
 import { createLogger, Logger, LoggerOptions } from 'winston';
 import { Utils } from './utils/Utils';
 import { config } from 'dotenv';
-import { IUser } from './types/interfaces/IUser';
-import { IApp } from './types/interfaces/IApp';
+import fs from 'fs';
 
 export class Auth {
-	static db: Database;
-	static logger: Logger;
+  static db: Database;
+  static logger: Logger;
 
-	constructor(loggerOpts: LoggerOptions) {
-		Auth.logger = createLogger(loggerOpts);
-		Auth.logger.info('Starting VeyAuth by verlox...');
-		Auth.db = new Database(`${__dirname}/auth.db`);
+  constructor(loggerOpts: LoggerOptions) {
+    Auth.logger = createLogger(loggerOpts);
+    Auth.logger.info('Starting VeyAuth by verlox...');
+    Auth.db = new Database(`${__dirname}/auth.db`);
 
-		// Load .env vars
-		config();
+    // Load .env vars
+    config();
 
-		//#region Setup database
-		Auth.logger.info('Setting up tables and data...');
-		Auth.db.serialize(() => {
-			// Applications table
-			Auth.db.run('CREATE TABLE IF NOT EXISTS "applications" ( "id" INTEGER, "owner_id" INTEGER, "name" TEXT, "description" TEXT, "disabled" INTEGER NOT NULL DEFAULT 0, "disable_reason" TEXT, "subscriptions_enabled" INTEGER NOT NULL DEFAULT 0, "invite_required" INTEGER NOT NULL DEFAULT 0, "hwid_locked" INTEGER NOT NULL DEFAULT 0, "allow_user_self_deletion" INTEGER NOT NULL DEFAULT 1, PRIMARY KEY("id"))');
-			
-			// User table
-			Auth.db.run('CREATE TABLE IF NOT EXISTS "users" ( "id" INTEGER, "application_id" INTEGER, "username" INTEGER, "password" TEXT, "token" TEXT NOT NULL, "disabled" INTEGER NOT NULL DEFAULT 0, "disable_reason" TEXT, "hwid" TEXT, PRIMARY KEY("application_id","id"))');
-			
-			// Permissions table
-			Auth.db.run('CREATE TABLE IF NOT EXISTS "permissions" ("application_id" INTEGER NOT NULL, "user_id" INTEGER NOT NULL, "permissions" INTEGER, PRIMARY KEY("application_id","user_id"))');
+    //#region Setup database
+    Auth.logger.info('Setting up tables and data...');
+    Auth.db.serialize(() => {
+      // Applications table
+      Auth.db.run('CREATE TABLE IF NOT EXISTS "applications" ( "id" INTEGER, "owner_id" INTEGER, "name" TEXT, "description" TEXT, "disabled" INTEGER NOT NULL DEFAULT 0, "disable_reason" TEXT, "subscriptions_enabled" INTEGER NOT NULL DEFAULT 0, "invite_required" INTEGER NOT NULL DEFAULT 0, "hwid_locked" INTEGER NOT NULL DEFAULT 0, "allow_user_self_deletion" INTEGER NOT NULL DEFAULT 1, PRIMARY KEY("id"))');
 
-			// Create a application named Global, this is the global permissions
-			Auth.db.run('INSERT OR IGNORE INTO applications (id, name) VALUES (-1, "Global")');
-		});
-		//#endregion
+      // User table
+      Auth.db.run('CREATE TABLE IF NOT EXISTS "users" ( "id" INTEGER, "application_id" INTEGER, "username" INTEGER, "password" TEXT, "token" TEXT NOT NULL, "disabled" INTEGER NOT NULL DEFAULT 0, "disable_reason" TEXT, "hwid" TEXT, PRIMARY KEY("application_id","id"))');
 
-		// Check all the environmental vars, if they don't exist, create them
-		// - verlox @ 1/28/22
-		Auth.logger.info('Checking environment...');
+      // Permissions table
+      Auth.db.run('CREATE TABLE IF NOT EXISTS "permissions" ("application_id" INTEGER NOT NULL, "user_id" INTEGER NOT NULL, "permissions" INTEGER, PRIMARY KEY("application_id","user_id"))');
 
-		// Check for SESSION_SECRET, this is for the JWTs
-		if (!process.env.SESSION_SECRET) {
-			process.env.SESSION_SECRET = Utils.createString(20, true, true, false);
-			fs.appendFileSync('.env', `\nSESSION_SECRET=${process.env.SESSION_SECRET}`);
+      // Create a application named Global, this is the global permissions
+      Auth.db.run('INSERT OR IGNORE INTO applications (id, name) VALUES (-1, "Global")');
+    });
+    //#endregion
 
-			Auth.logger.info(`[ENV] Created SESSION_SECRET in .env: ${process.env.SESSION_SECRET}`);
-		} else
-			Auth.logger.info(`[ENV] SESSION_SECRET is ${process.env.SESSION_SECRET}`);
+    // Check all the environmental vars, if they don't exist, create them
+    // - verlox @ 1/28/22
+    Auth.logger.info('Checking environment...');
 
-		// Check for PASSWORD_SALT, this is used in the hashString function in SecurityHelper
-		if (!process.env.PASSWORD_SALT) {
-			process.env.PASSWORD_SALT = Utils.createString(50, true, true, true);
-			fs.appendFileSync('.env', `\nPASSWORD_SALT=${process.env.PASSWORD_SALT}`);
+    // Check for SESSION_SECRET, this is for the JWTs
+    if (!process.env.SESSION_SECRET) {
+      process.env.SESSION_SECRET = Utils.createString(20, true, true, false);
+      fs.appendFileSync('.env', `\nSESSION_SECRET=${process.env.SESSION_SECRET}`);
 
-			Auth.logger.info(`[ENV] Created PASSWORD_SALT in .env: ${process.env.PASSWORD_SALT}`);
-		} else
-			Auth.logger.info(`[ENV] PASSWORD_SALT is ${process.env.PASSWORD_SALT}`);
+      Auth.logger.info(`[ENV] Created SESSION_SECRET in .env: ${process.env.SESSION_SECRET}`);
+    } else
+      Auth.logger.info(`[ENV] SESSION_SECRET is ${process.env.SESSION_SECRET}`);
 
-		// Finished loading this shitshow
-		Auth.logger.info('Finished loading VeyAuth!');
-	}
+    // Check for PASSWORD_SALT, this is used in the hashString function in SecurityHelper
+    if (!process.env.PASSWORD_SALT) {
+      process.env.PASSWORD_SALT = Utils.createString(50, true, true, true);
+      fs.appendFileSync('.env', `\nPASSWORD_SALT=${process.env.PASSWORD_SALT}`);
+
+      Auth.logger.info(`[ENV] Created PASSWORD_SALT in .env: ${process.env.PASSWORD_SALT}`);
+    } else
+      Auth.logger.info(`[ENV] PASSWORD_SALT is ${process.env.PASSWORD_SALT}`);
+
+    // Finished loading this shitshow
+    Auth.logger.info('Finished loading VeyAuth!');
+  }
 }
 
 // Other modules export last, since database needs to be initialized
