@@ -7,7 +7,7 @@
     "jwt-simple": "^0.5.6",
     "logging": "^3.3.0",
     "sqlite3": "^5.0.2",
-    "ts-node": "^10.4.0",
+    "ts-node": "^10.5.0",
     "typescript": "^4.5.5",
     "winston": "^3.4.0"
   },
@@ -16,7 +16,7 @@
   "description": "Authentication backend that works with Veylib",
   "main": "test.js",
   "scripts": {
-    "run": "tsc"
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
