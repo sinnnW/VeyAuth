@@ -1,9 +1,8 @@
-import { IBase } from './IBase';
 import { Var } from '../Var';
 import { App } from '../App';
 import { User } from '../User';
 
-export interface IVar extends IBase {
+export interface IVar {
   key: string;
   value: string;
   private: boolean;
@@ -16,5 +15,4 @@ export interface IVar extends IBase {
   save(auth: User): Promise<Var>;
 
   delete(auth: User): void;
-  create(auth: User, app: App, user: User, key: string, value: string, priv: boolean): void;
 }
