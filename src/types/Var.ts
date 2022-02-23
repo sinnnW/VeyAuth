@@ -18,6 +18,10 @@ export class Var implements IVar {
   // The previous key name
   #prevKeyName: string;
 
+  /**
+   * Update a var to a new key
+   * @param key New key
+   */
   setKey(key: string) {
     if (Utils.hasSpecialChars(key))
       throw new Error('Key cannot contain special characters');
@@ -27,16 +31,29 @@ export class Var implements IVar {
     this.key = key;
   }
 
+  /**
+   * Update a vars value
+   * @param value New value
+   */
   setValue(value: string) {
     this.#changes = true;
     this.value = value;
   }
 
+  /**
+   * Change whether the var is private or not
+   * @param priv {boolean}
+   */
   setPrivate(priv: boolean) {
     this.#changes = true;
     this.private = priv;
   }
 
+  /**
+   * Save the pending changes
+   * @param auth 
+   * @returns {Promise<Var>} Updated var
+   */
   save(auth: User): Promise<Var> {
     return new Promise<Var>((resolve, reject) => {
       if (!this.#prevKeyName)
@@ -48,7 +65,7 @@ export class Var implements IVar {
 
       // Make sure that they have permission
       else if (!auth || !auth.permissions.has(FLAGS.MODIFY_VARS, this.application.id))
-        return reject('Invalid permissions')
+        return reject('Invalid permissions');
 
       // Make sure all the required fields are filled
       else if (!this.key || !this.value || (!this.private && this.private !== false))
@@ -91,9 +108,19 @@ export class Var implements IVar {
     });
   }
 
+  /**
+   * Delete the variable
+   * @param auth 
+   * @returns {Promise<void>}
+   */
   delete(auth: User): Promise<void> {
     return new Promise((resolve, reject) => {
-      
+      if (!auth?.permissions.has(FLAGS.DELETE_VARS, this.application.id))
+        return reject('Invalid permissions');
+
+      Auth.db.run('DELETE FROM variables WHERE application_id = ? AND user_id = ? AND key = ?', [ this.application.id, this.user?.id, this.key ], () => {
+        return resolve();
+      });
     })
   }
 
