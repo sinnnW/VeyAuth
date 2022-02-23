@@ -91,8 +91,10 @@ export class Var implements IVar {
     });
   }
 
-  delete(auth: User) {
-    throw new Error('not implemented you impatient cunt')
+  delete(auth: User): Promise<void> {
+    return new Promise((resolve, reject) => {
+      
+    })
   }
 
   static create(auth: User, app: App, user: User, key: string, value: string, priv: boolean): Promise<Var> {
