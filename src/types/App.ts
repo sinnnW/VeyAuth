@@ -108,11 +108,14 @@ export class App implements IApp {
 	*/
 	save(auth: User): Promise<App> {
 		return new Promise<App>((resolve, reject) => {
-			if (!this.#prevName)
-				this.#prevName = this.name;
+      if (this.id == -1)
+        return reject('This application cannot be modified'); 
+        
+      else if (!this.#prevName)
+        this.#prevName = this.name;
 
 			// If this is true, there are no changes to make
-			if (!this.#changes)
+			else if (!this.#changes)
 				return resolve(this);
 
 			// Make sure that they have permission
