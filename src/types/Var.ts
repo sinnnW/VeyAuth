@@ -124,9 +124,78 @@ export class Var implements IVar {
     })
   }
 
+  /**
+   * Create a new variable from a SQLite return
+   * @param rawSql 
+   * @returns {Promise<Var>} Finished variable
+   */
+  static fill(rawSql: any): Promise<Var> {
+    return new Promise<Var>(async (resolve, reject) => {
+      var v = new Var();
+
+      // Set the values
+      v.key = rawSql.key;
+      v.value = rawSql.value;
+      v.private = rawSql.private == 1 ? true : false;
+      v.application = await App.get(rawSql.application_id);
+  
+      if (rawSql.user_id)
+        v.user = await User.get(rawSql.user_id);
+    })
+  }
+
+  static get(auth: User, app: App, user: User, key: string): Promise<Var> {
+    return new Promise((resolve, reject) => {
+      Auth.db.get('SELECT * FROM variables WHERE application_id = ? AND user_id = ? AND key = ?', [ app.id, user.id, key ], async (err, data) => {
+        // Make sure there was not an error
+        if (err)
+          return reject(err);
+
+        // Make sure there was data
+        else if (!data)
+          return reject('Unknown variable');
+
+        // Make sure it's not private and that they have access to the var if so
+        else if (data.private && !auth?.permissions.has(FLAGS.VIEW_PRIVATE_VARS))
+          return reject('Variable is private and authenticated user does not have permission to view private variables');
+
+        // All good to return the variable
+        else
+          return resolve(await Var.fill(data));
+      })
+    })
+  }
+
+  /**
+   * Create a new variable for an application/user
+   * @param auth 
+   * @param app Application to create under
+   * @param user User to create under, null for it to be application-wide
+   * @param key 
+   * @param value 
+   * @param priv Private
+   * @returns {Promise<Var>} The created variable
+   */
   static create(auth: User, app: App, user: User, key: string, value: string, priv: boolean): Promise<Var> {
-    return new Promise<Var>((resolve, reject) => {
-      
+    return new Promise<Var>(async (resolve, reject) => {
+      // Make sure they have permission
+      if (!auth?.permissions.has(FLAGS.CREATE_VARS, app.id))
+        return reject('Invalid permissions');
+
+      // This will only get assigned if it got a actual variable
+      let v = await Var.get(auth, app, user, key)
+        .catch(() => {});
+
+      // Make sure it doesnt already exist
+      if (v)
+        return reject('A variable with that name already exists');
+
+      Auth.db.run('INSERT INTO variables (application_id, user_id, key, value, private) VALUES (?, ?, ?, ?, ?)', [ app.id, user.id, key, value, priv ], async err => {
+        if (err)
+          return reject(err);
+        else
+          return await Var.get(auth, app, user, key);
+      });
     })
   }
 }
