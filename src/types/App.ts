@@ -1,7 +1,7 @@
 import { IApp } from './interfaces/IApp';
-import { IVar } from './interfaces/IVar';
+import { Var } from './Var';
 import { User } from './User';
-import { Auth } from '..';
+import { Core } from '..';
 import { Utils } from '../utils/Utils';
 import { FLAGS } from './UserPermissions';
 
@@ -127,40 +127,40 @@ export class App implements IApp {
 			else if (Utils.hasSpecialChars(this.name))
 				return reject('Name cannot contain special characters')
 
-			Auth.logger.debug(`Saving application information for ${this.format}, auth: ${auth.format}`);
-			Auth.db.get('SELECT * FROM applications WHERE name = ?', [this.name], (err, row) => {
+			Core.logger.debug(`Saving application information for ${this.format}, auth: ${auth.format}`);
+			Core.db.get('SELECT * FROM applications WHERE name = ?', [this.name], (err, row) => {
 				if (err)
 					return reject(err);
 				else if (row && this.name != this.#prevName)
 					return reject('Name is already taken');
 
 				// Run all the save commands
-				Auth.db.serialize(() => {
+				Core.db.serialize(() => {
 					// Set the name
-					Auth.db.run('UPDATE applications SET name = ? WHERE id = ?', [this.name, this.id]);
-					Auth.logger.debug('Updated name');
+					Core.db.run('UPDATE applications SET name = ? WHERE id = ?', [this.name, this.id]);
+					Core.logger.debug('Updated name');
 
 					// Set the description
-					Auth.db.run('UPDATE applications SET description = ? WHERE id = ?', [this.description == 'No description' ? null : this.description, this.id]);
-					Auth.logger.debug('Updated description');
+					Core.db.run('UPDATE applications SET description = ? WHERE id = ?', [this.description == 'No description' ? null : this.description, this.id]);
+					Core.logger.debug('Updated description');
 
 					// Update owner
-					Auth.db.run('UPDATE applications SET owner_id = ? WHERE id = ?', [this.owner.id, this.id]);
-					Auth.logger.debug('Updated owner');
+					Core.db.run('UPDATE applications SET owner_id = ? WHERE id = ?', [this.owner.id, this.id]);
+					Core.logger.debug('Updated owner');
 
 					// Update disabled
-					Auth.db.run('UPDATE applications SET disabled = ? WHERE id = ?', [this.disabled ? 1 : 0, this.id]);
-					Auth.logger.debug('Updated disabled');
+					Core.db.run('UPDATE applications SET disabled = ? WHERE id = ?', [this.disabled ? 1 : 0, this.id]);
+					Core.logger.debug('Updated disabled');
 
 					// Update disable_reason
-					Auth.db.run('UPDATE applications SET disable_reason = ? WHERE id = ?', [this.disableReason == 'No reason' ? null : this.disableReason, this.id], async () => {
-						Auth.logger.debug('Updated disable_reason');
+					Core.db.run('UPDATE applications SET disable_reason = ? WHERE id = ?', [this.disableReason == 'No reason' ? null : this.disableReason, this.id], async () => {
+						Core.logger.debug('Updated disable_reason');
 
 						// Updates were saved
 						this.#changes = false;
 
 						// Return the updated user
-						Auth.logger.debug(`Saved application information for ${this.format}`);
+						Core.logger.debug(`Saved application information for ${this.format}`);
 						return resolve(this);
 					});
 				});
@@ -173,7 +173,7 @@ export class App implements IApp {
 	*/
 	getUserCount(): Promise<number> {
 		return new Promise<number>((resolve, reject) => {
-			Auth.db.all('SELECT * FROM users WHERE application_id = ?', (err, rows) => {
+			Core.db.all('SELECT * FROM users WHERE application_id = ?', (err, rows) => {
 				if (err)
 					return reject(err);
 				else
@@ -182,7 +182,7 @@ export class App implements IApp {
 		})
 	}
 
-	getVars(authToken: string, hwid: string): [IVar] {
+	getVars(authToken: string, hwid: string): [Var] {
 		throw new Error("Not implemented");
 	}
 
@@ -192,11 +192,11 @@ export class App implements IApp {
 			if (!auth?.permissions.has(FLAGS.MODIFY_USERS, this.id))
 				return reject('Invalid permissions');
 
-			Auth.db.serialize(() => {
-				Auth.db.run('DELETE FROM applications WHERE id = ?', [this.id]);
-				Auth.db.run('DELETE FROM users WHERE application_id = ?', [this.id]);
-				Auth.db.run('DELETE FROM permissions WHERE application_id = ?', [this.id], () => {
-					Auth.logger.debug(`Deleted application ${this.format}`);
+			Core.db.serialize(() => {
+				Core.db.run('DELETE FROM applications WHERE id = ?', [this.id]);
+				Core.db.run('DELETE FROM users WHERE application_id = ?', [this.id]);
+				Core.db.run('DELETE FROM permissions WHERE application_id = ?', [this.id], () => {
+					Core.logger.debug(`Deleted application ${this.format}`);
 					resolve();
 				});
 			})
@@ -205,7 +205,7 @@ export class App implements IApp {
 
 	/**
 	* Create an application
-	* @param auth Auth user with permissions to create an application
+	* @param auth Core user with permissions to create an application
 	* @param name Name of app
 	* @param description App description
 	* @param subscriptionsEnabled 
@@ -215,7 +215,7 @@ export class App implements IApp {
 	*/
 	static create(auth: User, name: string, description?: string, subscriptionsEnabled: boolean = false, inviteRequired: boolean = false, hwidLocked: boolean = false): Promise<App> {
 		return new Promise<App>(async (resolve, reject) => {
-			Auth.logger.debug(`Creating app ${name} with owner ${auth.format}`);
+			Core.logger.debug(`Creating app ${name} with owner ${auth.format}`);
 			if (!auth?.permissions.has(FLAGS.CREATE_APPLICATION))
 				return reject('Invalid permissions');
 
@@ -226,28 +226,28 @@ export class App implements IApp {
 				return reject('Name cannot contain special characters');
 
 			var id = 1;
-			Auth.db.serialize(() => {
+			Core.db.serialize(() => {
 				// Make sure name isnt taken
-				Auth.db.get('SELECT name FROM applications WHERE name = ?', [name], (err, data) => {
+				Core.db.get('SELECT name FROM applications WHERE name = ?', [name], (err, data) => {
 					if (err)
 						return reject(err);
 					else if (data)
 						return reject('App name is already taken');
 
 					// Get the id
-					Auth.db.get('SELECT id FROM applications ORDER BY id DESC', (err, data) => {
+					Core.db.get('SELECT id FROM applications ORDER BY id DESC', (err, data) => {
 						if (err)
 							return reject(err);
 						else
 							id += data.id || 0;
 
 						// Create the actual application
-						Auth.db.run('INSERT INTO applications (id, owner_id, name, description, subscriptions_enabled, invite_required, hwid_locked) VALUES (?, ?, ?, ?, ?, ?, ?)', [id, auth.id, name, description, subscriptionsEnabled, inviteRequired, hwidLocked], async err => {
+						Core.db.run('INSERT INTO applications (id, owner_id, name, description, subscriptions_enabled, invite_required, hwid_locked) VALUES (?, ?, ?, ?, ?, ?, ?)', [id, auth.id, name, description, subscriptionsEnabled, inviteRequired, hwidLocked], async err => {
 							if (err)
 								return reject(err);
 							else {
 								var app = await App.get(id);
-								Auth.logger.debug(`Created app ${app.format} with owner ${app.owner.format}`);
+								Core.logger.debug(`Created app ${app.format} with owner ${app.owner.format}`);
 								return resolve(app);
 							}
 						})
@@ -300,7 +300,7 @@ export class App implements IApp {
 	private static getById(id: number, omitOwner: boolean): Promise<App> {
 		return new Promise<App>((resolve, reject) => {
 			// check if application already exists in _db
-			Auth.db.get('SELECT * FROM applications WHERE id = ?', [id], (err, data) => {
+			Core.db.get('SELECT * FROM applications WHERE id = ?', [id], (err, data) => {
 				if (err)
 					throw err;
 				// if it doesn't exist, throw an error
@@ -314,7 +314,7 @@ export class App implements IApp {
 
 	private static getByName(name: string, omitOwner: boolean): Promise<App> {
 		return new Promise<App>((resolve, reject) => {
-			Auth.db.get('SELECT * FROM applications WHERE name = ?', [name], (err, data) => {
+			Core.db.get('SELECT * FROM applications WHERE name = ?', [name], (err, data) => {
 				if (err)
 					return reject(err)
 				else if (!data)

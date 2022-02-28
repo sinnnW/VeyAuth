@@ -1,4 +1,4 @@
-import { Auth } from '..';
+import { Core } from '..';
 import { BitField } from '../utils/BitField';
 import { FLAGS } from './UserPermissions';
 import { UserPermissions } from './UserPermissions';
@@ -104,8 +104,8 @@ export class UserPermissionsArray {
           return reject('You cannot give permissions you do not have');
 
 
-        Auth.db.run('REPLACE INTO permissions (application_id, user_id, permissions) VALUES (?, ?, ?)', [key, this.#parentUser?.id, value.field]);
-        Auth.logger.debug(`Updated ${this.#parentUser?.format} permissions on app ${key} to ${value.field}`);
+        Core.db.run('REPLACE INTO permissions (application_id, user_id, permissions) VALUES (?, ?, ?)', [key, this.#parentUser?.id, value.field]);
+        Core.logger.debug(`Updated ${this.#parentUser?.format} permissions on app ${key} to ${value.field}`);
       }
 
       // Reset

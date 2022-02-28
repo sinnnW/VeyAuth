@@ -2,7 +2,7 @@ import { IVar } from './interfaces/IVar';
 import { Utils } from '../utils/Utils';
 import { App } from './App';
 import { User } from './User';
-import { Auth } from '..';
+import { Core } from '..';
 import { FLAGS } from './UserPermissions';
 
 export class Var implements IVar {
@@ -75,32 +75,32 @@ export class Var implements IVar {
       else if (Utils.hasSpecialChars(this.key))
         return reject('Key cannot contain special characters')
 
-      Auth.logger.debug(`Saving variable information for ${this.key}, auth: ${auth.format}`);
-      Auth.db.get('SELECT * FROM variables WHERE application_id = ? AND user_id = ? AND key = ?', [this.application.id, this.user?.id, this.key], (err, row) => {
+      Core.logger.debug(`Saving variable information for ${this.key}, auth: ${auth.format}`);
+      Core.db.get('SELECT * FROM variables WHERE application_id = ? AND user_id = ? AND key = ?', [this.application.id, this.user?.id, this.key], (err, row) => {
         if (err)
           return reject(err);
         else if (row && this.key != this.#prevKeyName)
           return reject(`Key is already taken for user ${this.user?.format} on app ${this.application.format}`);
 
         // Run all the save commands
-        Auth.db.serialize(() => {
+        Core.db.serialize(() => {
           // Set the key
-          Auth.db.run('UPDATE variables SET key = ? WHERE application_id = ? AND user_id = ?', [this.key, this.application.id, this.user?.id]);
-          Auth.logger.debug('Updated key');
+          Core.db.run('UPDATE variables SET key = ? WHERE application_id = ? AND user_id = ?', [this.key, this.application.id, this.user?.id]);
+          Core.logger.debug('Updated key');
 
           // Update value
-          Auth.db.run('UPDATE variables SET value = ? WHERE application_id = ? AND user_id = ?', [this.value, this.application.id, this.user?.id]);
-          Auth.logger.debug('Updated value');
+          Core.db.run('UPDATE variables SET value = ? WHERE application_id = ? AND user_id = ?', [this.value, this.application.id, this.user?.id]);
+          Core.logger.debug('Updated value');
 
           // Update private
-          Auth.db.run('UPDATE variables SET private = ? WHERE application_id = ? AND user_id = ?', [this.private ? 1 : 0, this.application.id, this.user?.id], async () => {
-            Auth.logger.debug('Updated private');
+          Core.db.run('UPDATE variables SET private = ? WHERE application_id = ? AND user_id = ?', [this.private ? 1 : 0, this.application.id, this.user?.id], async () => {
+            Core.logger.debug('Updated private');
   
             // Updates were saved
             this.#changes = false;
   
             // Return the updated user
-            Auth.logger.debug(`Saved variable information for ${this.key} in ${this.application.format} for user ${this.user?.format}`);
+            Core.logger.debug(`Saved variable information for ${this.key} in ${this.application.format} for user ${this.user?.format}`);
             return resolve(this);
           });
         });
@@ -118,7 +118,7 @@ export class Var implements IVar {
       if (!auth?.permissions.has(FLAGS.DELETE_VARS, this.application.id))
         return reject('Invalid permissions');
 
-      Auth.db.run('DELETE FROM variables WHERE application_id = ? AND user_id = ? AND key = ?', [ this.application.id, this.user?.id, this.key ], () => {
+      Core.db.run('DELETE FROM variables WHERE application_id = ? AND user_id = ? AND key = ?', [ this.application.id, this.user?.id, this.key ], () => {
         return resolve();
       });
     })
@@ -146,7 +146,7 @@ export class Var implements IVar {
 
   static get(auth: User, app: App, user: User, key: string): Promise<Var> {
     return new Promise((resolve, reject) => {
-      Auth.db.get('SELECT * FROM variables WHERE application_id = ? AND user_id = ? AND key = ?', [ app.id, user.id, key ], async (err, data) => {
+      Core.db.get('SELECT * FROM variables WHERE application_id = ? AND user_id = ? AND key = ?', [ app.id, user.id, key ], async (err, data) => {
         // Make sure there was not an error
         if (err)
           return reject(err);
@@ -190,7 +190,7 @@ export class Var implements IVar {
       if (v)
         return reject('A variable with that name already exists');
 
-      Auth.db.run('INSERT INTO variables (application_id, user_id, key, value, private) VALUES (?, ?, ?, ?, ?)', [ app.id, user.id, key, value, priv ], async err => {
+      Core.db.run('INSERT INTO variables (application_id, user_id, key, value, private) VALUES (?, ?, ?, ?, ?)', [ app.id, user.id, key, value, priv ], async err => {
         if (err)
           return reject(err);
         else
