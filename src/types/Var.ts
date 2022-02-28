@@ -144,9 +144,9 @@ export class Var implements IVar {
     })
   }
 
-  static get(auth: User, app: App, user: User, key: string): Promise<Var> {
+  static get(auth: User, app: App, user: User | null, key: string): Promise<Var> {
     return new Promise((resolve, reject) => {
-      Core.db.get('SELECT * FROM variables WHERE application_id = ? AND user_id = ? AND key = ?', [ app.id, user.id, key ], async (err, data) => {
+      Core.db.get(`SELECT * FROM variables WHERE application_id = ? AND user_id ${user?.id ? '=' : 'IS'} ? AND key = ?`, [ app.id, user?.id, key ], async (err, data) => {
         // Make sure there was not an error
         if (err)
           return reject(err);
@@ -176,7 +176,7 @@ export class Var implements IVar {
    * @param priv Private
    * @returns {Promise<Var>} The created variable
    */
-  static create(auth: User, app: App, user: User, key: string, value: string, priv: boolean): Promise<Var> {
+  static create(auth: User, app: App, user: User | null, key: string, value: string, priv: boolean): Promise<Var> {
     return new Promise<Var>(async (resolve, reject) => {
       // Make sure they have permission
       if (!auth?.permissions.has(FLAGS.CREATE_VARS, app.id))
@@ -190,11 +190,13 @@ export class Var implements IVar {
       if (v)
         return reject('A variable with that name already exists');
 
-      Core.db.run('INSERT INTO variables (application_id, user_id, key, value, private) VALUES (?, ?, ?, ?, ?)', [ app.id, user.id, key, value, priv ], async err => {
+      Core.db.run('INSERT INTO variables (application_id, user_id, key, value, private) VALUES (?, ?, ?, ?, ?)', [ app.id, user?.id, key, value, priv ], async err => {
         if (err)
           return reject(err);
-        else
-          return await Var.get(auth, app, user, key);
+        else {
+          Core.logger.debug(`Created new variable under app ${app.format} ${user ? `and user ${user.format}` : ''} with key ${key} and value ${value} (private: ${priv})`);
+          return resolve(await Var.get(auth, app, user, key));
+        }
       });
     })
   }
