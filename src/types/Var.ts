@@ -141,6 +141,8 @@ export class Var implements IVar {
   
       if (rawSql.user_id)
         v.user = await User.get(rawSql.user_id);
+
+      return resolve(v);
     })
   }
 
