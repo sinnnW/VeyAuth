@@ -32,7 +32,7 @@ new Core({
 
       var newuser = await User.create(admin, app, `verlox${Math.round(Math.random() * 999)}`, 'godcc')
       
-      await Var.create(admin, app, newuser, 'testkey', 'testvalue', false);
+      await Var.create(admin, app, newuser, 'testkey', 'testvalue', true);
 
       console.log(await Var.get(null, app, newuser, 'testkey'));
       

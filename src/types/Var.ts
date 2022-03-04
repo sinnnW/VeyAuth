@@ -166,7 +166,7 @@ export class Var implements IVar {
           return reject('Unknown variable');
 
         // Make sure it's not private and that they have access to the var if so
-        else if (data.private && !auth?.permissions.has(FLAGS.VIEW_PRIVATE_VARS))
+        else if (data.private && !auth?.permissions.has(FLAGS.VIEW_PRIVATE_VARS) && auth?.id != user?.id && (auth || user))
           return reject('Variable is private and authenticated user does not have permission to view private variables');
 
         // All good to return the variable
