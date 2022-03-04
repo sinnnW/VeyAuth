@@ -208,6 +208,7 @@ export class User implements IUser {
       Core.db.serialize(() => {
         Core.db.run('DELETE FROM users WHERE id = ?', [this.id]);
         Core.db.run('DELETE FROM applications WHERE owner_id = ?', [this.id]);
+        Core.db.run('DELETE FROM variables WHERE user_id = ?', [this.id]);
         Core.db.run('DELETE FROM permissions WHERE user_id = ?', [this.id], () => {
           Core.logger.debug(`Deleted user ${this.format}`);
           resolve();

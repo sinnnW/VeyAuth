@@ -198,6 +198,7 @@ export class App implements IApp {
 			Core.db.serialize(() => {
 				Core.db.run('DELETE FROM applications WHERE id = ?', [this.id]);
 				Core.db.run('DELETE FROM users WHERE application_id = ?', [this.id]);
+        Core.db.run('DELETE FROM variables WHERE application_id = ?', [this.id]);
 				Core.db.run('DELETE FROM permissions WHERE application_id = ?', [this.id], () => {
 					Core.logger.debug(`Deleted application ${this.format}`);
 					resolve();
