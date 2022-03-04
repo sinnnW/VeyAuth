@@ -30,10 +30,11 @@ new Core({
       // set the permissions on the global app to user level permissions
       (await User.get(1)).permissions.set(0, -1).save(admin);
 
-      // test creating a new var appwide
-      await Var.create(admin, app, null, 'testkey', 'testvalue', false);
-      
       var newuser = await User.create(admin, app, `verlox${Math.round(Math.random() * 999)}`, 'godcc')
+      
+      await Var.create(admin, app, newuser, 'testkey', 'testvalue', false);
+
+      console.log(await Var.get(null, app, newuser, 'testkey'));
       
       newuser.permissions.set(0, FLAGS.MODIFY_USERS);
       await newuser.permissions.save(admin);

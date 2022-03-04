@@ -154,7 +154,7 @@ export class Var implements IVar {
    * @param key 
    * @returns {Promise<Var>} Variable found
    */
-  static get(auth: User, app: App, user: User | null, key: string): Promise<Var> {
+  static get(auth: User | null, app: App, user: User | null, key: string): Promise<Var> {
     return new Promise((resolve, reject) => {
       Core.db.get(`SELECT * FROM variables WHERE application_id = ? AND user_id ${user?.id ? '=' : 'IS'} ? AND key = ?`, [ app.id, user?.id, key ], async (err, data) => {
         // Make sure there was not an error
