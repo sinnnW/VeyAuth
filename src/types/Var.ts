@@ -136,7 +136,7 @@ export class Var implements IVar {
       // Set the values
       v.key = rawSql.key;
       v.value = rawSql.value;
-      v.private = rawSql.private == 1 ? true : false;
+      v.private = rawSql.private;
       v.application = await App.get(rawSql.application_id);
   
       if (rawSql.user_id)
