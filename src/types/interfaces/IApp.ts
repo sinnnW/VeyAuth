@@ -7,6 +7,7 @@ export interface IApp extends IBase {
   description: string;
   owner: User;
   allowUserSelfDeletion: boolean;
+  publicSubscriptions: boolean;
 
   setDisabled(disabled: boolean): void;
   enable(): void;
