@@ -5,6 +5,7 @@ import { UserPermissionsArray } from './UserPermissionsArray';
 import { App } from './App';
 import { Utils } from '../utils/Utils';
 import { SecurityHelper } from '../utils/SecurityHelper';
+import { SubscriptionManager } from './SubscriptionManager';
 
 enum GET_FLAGS {
   GET_BY_ID,
@@ -24,6 +25,7 @@ export class User implements IUser {
   disabled: boolean = false;
   disableReason?: string = 'No reason';
   application: App;
+  subscription: SubscriptionManager;
 
   // Internal var to detect if there is changes for saving
   #changes = false;
@@ -386,6 +388,7 @@ export class User implements IUser {
         usr.permissions = new UserPermissionsArray(FLAGS.USER, usr);//[-1, new UserPermissions(data.permissions)];
         usr.token = data.token;
         usr.password = data.password;
+        usr.subscription = new SubscriptionManager(usr);
 
         // Application specified permissions
         Core.db.all('SELECT * FROM permissions WHERE user_id = ?', [usr.id], (err2, row2: any) => {
