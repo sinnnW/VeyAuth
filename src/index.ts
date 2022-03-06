@@ -27,7 +27,7 @@ export class Core {
 
       // Permissions table
       Core.db.run('CREATE TABLE IF NOT EXISTS "permissions" ("application_id" INTEGER NOT NULL, "user_id" INTEGER NOT NULL, "permissions" INTEGER, PRIMARY KEY("application_id","user_id"))');
-
+      
       // Create a application named Global, this is the global permissions
       Core.db.run('INSERT OR IGNORE INTO applications (id, name) VALUES (-1, "Global")');
     });
@@ -64,3 +64,4 @@ export class Core {
 export { App } from './types/App';
 export { User } from './types/User';
 export { Var } from './types/Var';
+export { Subscription } from './types/Subscription';

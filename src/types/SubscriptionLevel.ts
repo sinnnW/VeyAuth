@@ -13,4 +13,10 @@ export class SubscriptionLevel implements ISubscriptionLevel {
   user: User;
   name: string;
   description?: string;
+
+  static getById(id: number): Promise<SubscriptionLevel> {
+    return new Promise<SubscriptionLevel>((resolve, reject) => {
+      
+    })
+  }
 }
