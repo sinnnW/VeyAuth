@@ -24,6 +24,7 @@ export class App implements IApp {
 	description: string;
 	owner: User;
 	allowUserSelfDeletion: boolean;
+  publicSubscriptions: boolean;
 
 	// Internal var to detect if there is changes for saving
 	#changes = false;
@@ -279,7 +280,7 @@ export class App implements IApp {
 		})
 	}
 
-	private static fill(data: any, omitOwner: boolean) {
+	private static fill(data: any, omitOwner: boolean): Promise<App> {
 		return new Promise<App>(async (resolve, reject) => {
 			var app = new App();
 
@@ -293,9 +294,10 @@ export class App implements IApp {
 			app.id = data.id;
 			app.name = data.name;
 			app.description = data.description || 'No description';
-			app.disabled = data.disabled == 1 ? true : false;
+			app.disabled = data.disabled;
 			app.disableReason = data.disable_reason || 'No reason';
-			app.allowUserSelfDeletion = data.allow_user_self_deletion == 1 ? true : false;
+			app.allowUserSelfDeletion = data.allow_user_self_deletion;
+      app.publicSubscriptions = data.subscriptions_public;
 
 			return resolve(app);
 		})
