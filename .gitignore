@@ -7,3 +7,5 @@ dist/
 originalauth.js
 notes.txt
 test.js
+statistics.js
+*.env
