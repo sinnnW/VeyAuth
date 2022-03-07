@@ -15,9 +15,9 @@ export class SubscriptionLevel implements ISubscriptionLevel {
   name: string;
   description?: string;
 
-  static getById(id: number, auth?: User): Promise<SubscriptionLevel> {
+  static getById(auth: User | null, app: App, id: number): Promise<SubscriptionLevel> {
     return new Promise<SubscriptionLevel>((resolve, reject) => {
-      Core.db.get('SELECT * FROM subscription_levels WHERE id = ?', [ id ], async (err, data) => {
+      Core.db.get('SELECT * FROM subscription_levels WHERE application_id = ? AND id = ?', [ app.id, id ], async (err, data) => {
         if (err)
           return reject(err);
 
