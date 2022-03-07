@@ -1,7 +1,7 @@
 import { App } from './App';
 import { User } from './User';
 import { ISubscriptionLevel } from './interfaces/ISubscriptionLevel';
-import { Core } from '../index';
+import { Core } from '..';
 import { FLAGS } from './UserPermissions';
 import { Utils } from '../utils/Utils';
 
