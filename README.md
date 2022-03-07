@@ -11,3 +11,9 @@ I needed to recode my legacy authentication system I had originally wrote for a 
 
 ## Pull requests
 Pull reqeusts will be reviewed and are welcome
+
+## Todo:
+* Create statistics system
+
+ ## In progress:
+ * Subscription + levels
