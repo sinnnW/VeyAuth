@@ -122,12 +122,11 @@ export class SubscriptionLevel implements ISubscriptionLevel {
    * Create a new subscription level
    * @param {User} auth
    * @param {App} app
-   * @param {User} user 
    * @param {string} name Subscription level name 
    * @param {string} description Subscription level description 
    * @returns {Promise<SubscriptionLevel>} The created subscription level
    */
-  static create(auth: User, app: App, user: User, name: string, description?: string): Promise<SubscriptionLevel> {
+  static create(auth: User, app: App, name: string, description?: string): Promise<SubscriptionLevel> {
     return new Promise<SubscriptionLevel>((resolve, reject) => {
       // Make sure they have permission
       if (!auth?.permissions.has(FLAGS.CREATE_SUBSCRIPTION_LEVEL))
@@ -138,7 +137,7 @@ export class SubscriptionLevel implements ISubscriptionLevel {
           return reject(err);
 
         // Get an ID for a new subscription level
-        let id = (data.id || 0) + 1;
+        let id = (data?.id || 0) + 1;
 
         Core.db.run('INSERT INTO subscription_levels (id, application_id, name, description) VALUES (?, ?, ?, ?)', [ id, app.id, name, description ], async err => {
           if (err)
