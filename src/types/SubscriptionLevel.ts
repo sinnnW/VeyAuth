@@ -144,7 +144,7 @@ export class SubscriptionLevel implements ISubscriptionLevel {
             return reject(err);
 
           // Resolve with the created subscription level
-          return resolve(await SubscriptionLevel.getById(auth, app, id));
+          return resolve(await SubscriptionLevel.get(auth, app, id));
         })
       })
     })
@@ -157,25 +157,69 @@ export class SubscriptionLevel implements ISubscriptionLevel {
    * @param {number} id Subscription level ID
    * @returns {Promise<SubscriptionLevel>} Subscription level found
    */
-  static getById(auth: User | null, app: App, id: number): Promise<SubscriptionLevel> {
+  static get(auth: User | null, app: App, id: number): Promise<SubscriptionLevel> {
     return new Promise<SubscriptionLevel>((resolve, reject) => {
       Core.db.get('SELECT * FROM subscription_levels WHERE application_id = ? AND id = ?', [ app.id, id ], async (err, data) => {
         if (err)
           return reject(err);
 
-        // Check if there is no data
-        else if (!data)
-          return reject('Unknown subscription level ID');
-
-        var app = await App.get(data.application_id);
+        let app = await App.get(data.application_id);
 
         // Make sure that its not private data, and if it is, that there is valid auth to check it
         if (!app.publicSubscriptions && !auth?.permissions.has(FLAGS.VIEW_SUBSCRIPTION))
           return reject('Subscriptions are private on this application');
 
+        // Check if there is no data
+        else if (!data)
+          return reject('Unknown subscription level ID');
+
         // Return the actual stuff
         return resolve(await SubscriptionLevel.fill(data));
       });
+    })
+  }
+
+  /**
+   * This will find a subscription level with a certain name
+   * @param {User} auth 
+   * @param {App} app 
+   * @param {string} name 
+   * @param {boolean} checkSimilar Should it check for similar names?
+   * @returns {Promise<SubscriptionLevel>} THe found subscription level
+   */
+  static find(auth: User | null, app: App, name: string, checkSimilar = false): Promise<SubscriptionLevel> {
+    return new Promise<SubscriptionLevel>((resolve, reject) => {
+      Core.db.get('SELECT * FROM subscription_levels WHERE application_id = ? AND name = ?', [ app.id, name ], async (err, data) => {
+        if (err)
+          return reject(err);
+
+        // Get the app, we need this to check if subscriptions are public
+        let app = await App.get(data.application_id);
+
+        // Make sure they have permission to see
+        if (!app.publicSubscriptions && !auth?.permissions.has(FLAGS.VIEW_SUBSCRIPTION))
+          return reject('Subscriptions are private on this application');
+
+        // This will check by pattern, to see if any names contain the text
+        else if (!data && checkSimilar) {
+          Core.db.get('SELECT * FROM subscription_levels WHERE application_id = ? AND name LIKE \'%?%\'', [ app.id, name ], async (err, data) => {
+            if (err)
+              return reject(err);
+
+            // If there is no data, return
+            else if (!data)
+              return reject('Unknown subscription level name');
+
+            // If there is, finish
+            else
+              return resolve(await SubscriptionLevel.fill(data));
+          })
+        }
+        
+        // We can just return now.
+        else
+          return resolve(await SubscriptionLevel.fill(data));        
+      })
     })
   }
 
