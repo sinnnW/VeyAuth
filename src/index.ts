@@ -65,3 +65,4 @@ export { App } from './types/App';
 export { User } from './types/User';
 export { Var } from './types/Var';
 export { Subscription } from './types/Subscription';
+export { SubscriptionLevel } from './types/SubscriptionLevel';
