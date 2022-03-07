@@ -6,3 +6,4 @@ dist/
 *.log
 originalauth.js
 notes.txt
+test.js
