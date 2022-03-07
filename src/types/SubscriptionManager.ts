@@ -40,7 +40,7 @@ export class SubscriptionManager implements ISubscriptionManager {
 
           // Return the data
           else
-            return resolve(Subscription.fill(data));
+            return resolve(Subscription.fill(this.#auth, data));
         })
       }
     })
