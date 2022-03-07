@@ -14,6 +14,7 @@ Pull reqeusts will be reviewed and are welcome
 
 ## Todo:
 * Create statistics system
+* Make `get` get by ID, `find`, by name
 
  ## In progress:
  * Subscription + levels
