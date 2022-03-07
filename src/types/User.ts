@@ -389,6 +389,8 @@ export class User implements IUser {
         usr.token = data.token;
         usr.password = data.password;
         usr.subscription = new SubscriptionManager(usr);
+        usr.disabled = data.disabled == 1 ? true : false;
+        usr.disableReason = data.disable_reason;
 
         // Application specified permissions
         Core.db.all('SELECT * FROM permissions WHERE user_id = ?', [usr.id], (err2, row2: any) => {

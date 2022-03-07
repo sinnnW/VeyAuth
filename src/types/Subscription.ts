@@ -20,7 +20,7 @@ export class Subscription implements ISubscription {
       var sub = new Subscription();
   
       sub.id = data.id;
-      sub.disabled = data.disabled;
+      sub.disabled = data.disabled == 1 ? true : false;
       sub.disableReason = data.disable_reason;
       sub.application = await App.get(data.application_id);
       sub.user = await User.get(data.user_id);

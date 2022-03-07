@@ -294,10 +294,10 @@ export class App implements IApp {
 			app.id = data.id;
 			app.name = data.name;
 			app.description = data.description || 'No description';
-			app.disabled = data.disabled;
+			app.disabled = data.disabled == 1 ? true : false;
 			app.disableReason = data.disable_reason || 'No reason';
-			app.allowUserSelfDeletion = data.allow_user_self_deletion;
-      app.publicSubscriptions = data.subscriptions_public;
+			app.allowUserSelfDeletion = data.allow_user_self_deletion == 1 ? true : false;
+      app.publicSubscriptions = data.subscriptions_public == 1 ? true : false;
 
 			return resolve(app);
 		})

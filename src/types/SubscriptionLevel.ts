@@ -39,7 +39,7 @@ export class SubscriptionLevel implements ISubscriptionLevel {
       var sl = new SubscriptionLevel();
 
       sl.id = data.id;
-      sl.disabled = data.disabled;
+      sl.disabled = data.disabled == 1 ? true : false;
       sl.disableReason = data.disable_reason;
       sl.application = await App.get(data.application_id);
       sl.name = data.name;
