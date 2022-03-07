@@ -38,7 +38,7 @@ export class Utils {
    * Get the epoch time and return it in seconds
    * @returns {number} Time since epoch in seconds
    */
-  static epoch() {
+  static epoch(): number {
     return Math.round(Date.now() / 1000);
   }
 }
