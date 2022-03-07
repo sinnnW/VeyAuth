@@ -392,6 +392,9 @@ export class User implements IUser {
         usr.disabled = data.disabled == 1 ? true : false;
         usr.disableReason = data.disable_reason;
 
+        // Gotta pull the sub information
+        await usr.subscription._getSubData();
+
         // Application specified permissions
         Core.db.all('SELECT * FROM permissions WHERE user_id = ?', [usr.id], (err2, row2: any) => {
           if (err2)
