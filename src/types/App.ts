@@ -25,6 +25,7 @@ export class App implements IApp {
 	owner: User;
 	allowUserSelfDeletion: boolean;
   publicSubscriptions: boolean;
+  multipleSubscriptions: boolean;
 
 	// Internal var to detect if there is changes for saving
 	#changes = false;
@@ -298,6 +299,7 @@ export class App implements IApp {
 			app.disableReason = data.disable_reason || 'No reason';
 			app.allowUserSelfDeletion = data.allow_user_self_deletion == 1 ? true : false;
       app.publicSubscriptions = data.subscriptions_public == 1 ? true : false;
+      app.multipleSubscriptions = data.subscriptions_multiple == 1 ? true : false;
 
 			return resolve(app);
 		})
