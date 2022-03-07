@@ -55,51 +55,71 @@ export class Subscription implements ISubscription {
             if (err)
               return reject(err);
 
-            return resolve(await Subscription.get(auth, app, user));
+            return resolve(await Subscription.get(auth, app, user, id) as Subscription);
           })
         })
       })
     })
   }
 
-  static get(auth: User | null, app: App, user: User): Promise<Subscription> {
-    return new Promise<Subscription>((resolve, reject) => {
+  static get(auth: User | null, app: App, user: User, id?: number): Promise<[Subscription] | Subscription> {
+    return new Promise<[Subscription] | Subscription>((resolve, reject) => {
       if (auth?.id != user?.id && !auth?.permissions.has(FLAGS.VIEW_SUBSCRIPTION))
         return reject('Invalid permissions');
 
-      Core.db.get('SELECT * FROM subscriptions WHERE application_id = ? AND user_id = ?', [ app.id, user.id ], (err, data) => {
+      Core.db.all(`SELECT * FROM subscriptions WHERE application_id = ? AND user_id = ? ${id ? 'AND id = ?' : ''}`, [ app.id, user.id, id ], (err, data) => {
         // Reject errors
         if (err)
           return reject(err);
 
         // If there is data, the subscriptions are NOT public, and the requesting user is not the same as the target user, reject.
-        else if (data && !auth?.application.publicSubscriptions && data.user_id != auth?.id && !auth?.permissions.has(FLAGS.VIEW_SUBSCRIPTION))
+        else if (!auth?.application.publicSubscriptions && user.id != auth?.id && !auth?.permissions.has(FLAGS.VIEW_SUBSCRIPTION))
           return reject('Subscriptions are not public on this application')
 
         // No data.
-        else if (!data)
+        else if (!data?.length)
           return reject('User does not have a subscription');
 
         // Return the data
         else
-          return resolve(Subscription.fill(auth, data));
+          return resolve(Subscription.fill(auth, !app.multipleSubscriptions ? data[0] : data, user));
       })
     })
   }
 
-  static fill(auth: User, data: any): Promise<Subscription> {
-    return new Promise<Subscription>(async (resolve, reject) => {
-      var sub = new Subscription();
+  static fill(auth: User, data: any, parent?: User): Promise<[Subscription] | Subscription> {
+    return new Promise<[Subscription] | Subscription>(async (resolve, reject) => {
+      if (data.length) {
+        let subArr = [];
   
-      sub.id = data.id;
-      sub.disabled = data.disabled == 1 ? true : false;
-      sub.disableReason = data.disable_reason;
-      sub.application = await App.get(data.application_id);
-      sub.user = await User.get(data.user_id);
-      sub.level = await SubscriptionLevel.get(auth, sub.application, data.level_id);
-      sub.expiresAt = await new Date(data.expires_at * 1000);
+        for (var x = 0;x < data.length;x++) {
+          var sub = new Subscription();
+      
+          sub.id = data[x].id;
+          sub.disabled = data[x].disabled == 1 ? true : false;
+          sub.disableReason = data[x].disable_reason;
+          sub.application = await App.get(data[x].application_id);
+          sub.user = parent || await User.get(data[x].user_id);
+          sub.level = await SubscriptionLevel.get(auth, sub.application, data[x].level_id);
+          sub.expiresAt = await new Date(data[x].expires_at * 1000);
 
-      return resolve(sub);
+          subArr.push(sub);
+        }
+  
+        return resolve(subArr as [Subscription]);
+      } else {
+        var sub = new Subscription();
+
+        sub.id = data.id;
+        sub.disabled = data.disabled == 1 ? true : false;
+        sub.disableReason = data.disable_reason;
+        sub.application = await App.get(data.application_id);
+        sub.user = parent || await User.get(data.user_id);
+        sub.level = await SubscriptionLevel.get(auth, sub.application, data.level_id);
+        sub.expiresAt = await new Date(data.expires_at * 1000);
+
+        return resolve(sub);
+      }
     })
   }
 }

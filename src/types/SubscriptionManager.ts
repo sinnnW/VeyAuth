@@ -7,6 +7,8 @@ import { FLAGS } from './UserPermissions';
 import { Core } from '..';
 
 export class SubscriptionManager implements ISubscriptionManager {
+  subscriptions: [Subscription] | Subscription | null;
+
   // This is a completely hidden variable that is used internally only.
   #auth: User;
 
@@ -17,38 +19,37 @@ export class SubscriptionManager implements ISubscriptionManager {
   constructor(auth: User) {
     // Set the parent
     this.#auth = auth;
+
+    
   }
 
-  getSubscription(app?: App, user?: User): Promise<Subscription> {
-    return new Promise<Subscription>((resolve, reject) => {
-      if (this.#auth?.id != user?.id && !this.#auth?.permissions.has(FLAGS.VIEW_SUBSCRIPTION))
-        return reject('Invalid permissions');
-
-      if (!app && !user) {
-        Core.db.get('SELECT * FROM subscriptions WHERE application_id = ? AND user_id = ?', [ this.#auth?.application.id, this.#auth?.id ], (err, data) => {
-          // Reject errors
-          if (err)
-            return reject(err);
-
-          // If there is data, the subscriptions are NOT public, and the requesting user is not the same as the target user, reject.
-          else if (data && !this.#auth?.application.publicSubscriptions && data.user_id != this.#auth?.id)
-            return reject('Subscriptions are not public on this application')
-
-          // No data.
-          else if (!data)
-            return reject('User does not have a subscription');
-
-          // Return the data
-          else
-            return resolve(Subscription.fill(this.#auth, data));
+  _getSubData(): Promise<void> {
+    return new Promise<void>(async (resolve, reject) => {
+      var data = await Subscription.get(this.#auth, this.#auth.application, this.#auth)
+        .catch(() => {
+          this.subscriptions = null;
         })
-      }
+    
+      // console.log(data)
+      this.subscriptions = data as [Subscription] | Subscription;
+
+      return resolve();
     })
   }
+  
+  // Aliasing
+  subscribe = Subscription.create;
+  
+  // getLevel(): Promise<SubscriptionLevel> {
+  //   return SubscriptionLevel.get()
+  // }
+  // getSubscriptionLevel = SubscriptionLevel.getById;
 
-  getSubscriptionLevel(name?: string): Promise<SubscriptionLevel> {
-    return new Promise<SubscriptionLevel>((resolve, reject) => {
+  // getSubscription(app?: App, user?: User): Promise<Subscription> {
+    
+  // }
 
-    })
-  }
+  // getSubscriptionLevel(name?: string): Promise<SubscriptionLevel> {
+
+  // }
 }
