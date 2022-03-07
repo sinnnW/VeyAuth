@@ -310,10 +310,10 @@ export class App implements IApp {
 			// check if application already exists in _db
 			Core.db.get('SELECT * FROM applications WHERE id = ?', [id], (err, data) => {
 				if (err)
-					throw err;
+					return reject(err);
 				// if it doesn't exist, throw an error
 				else if (!data)
-					throw new Error('Unknown application');
+					return reject('Unknown application');
 				else
 					this.fill(data, omitOwner).then(resolve); // No catch, because nothing can reject, its just formatting
 			})
@@ -326,7 +326,7 @@ export class App implements IApp {
 				if (err)
 					return reject(err)
 				else if (!data)
-					throw new Error('Unknown application');
+					return reject('Unknown application');
 				else
 					this.fill(data, omitOwner).then(resolve); // No catch, because nothing can reject, its just formatting
 			})
