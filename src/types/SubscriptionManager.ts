@@ -1,9 +1,7 @@
 import { Subscription } from './Subscription';
 import { SubscriptionLevel } from './SubscriptionLevel';
-import { App } from './App';
 import { User } from './User';
 import { ISubscriptionManager } from './interfaces/ISubscriptionManager';
-import { FLAGS } from './UserPermissions';
 import { Core } from '..';
 
 export class SubscriptionManager implements ISubscriptionManager {
@@ -23,10 +21,9 @@ export class SubscriptionManager implements ISubscriptionManager {
 
   _getSubData(): Promise<void> {
     return new Promise<void>(async (resolve, reject) => {
+      this.all = null;
       var data = await Subscription.get(this.#auth, this.#auth.application, this.#auth)
-        .catch(() => {
-          this.all = null;
-        })
+        .catch(() => {});
     
       // console.log(data)
       this.all = data as [Subscription] | Subscription;
@@ -43,8 +40,15 @@ export class SubscriptionManager implements ISubscriptionManager {
    * @param {boolean} overwrite Should it overwrite any other subscriptions (on multi subscription applications)
    * @returns {Promise<Subscription>} Subscription created
    */
-  subscribe(auth: User, subscriptionLevel: SubscriptionLevel, expiresAt: Date, overwrite?: boolean): Promise<Subscription> {
-    return Subscription.create(auth, this.#auth.application, this.#auth, subscriptionLevel, expiresAt, overwrite);
+  subscribe(auth: User, subscriptionLevel: SubscriptionLevel, expiresAt?: Date, overwrite?: boolean): Promise<Subscription> {
+    return new Promise<Subscription>(async (resolve, reject) => {
+      var sub = await Subscription.create(auth, this.#auth.application, this.#auth, subscriptionLevel, expiresAt || new Date(0), overwrite);
+      
+      // Update the all cache
+      await this._getSubData();
+
+      return resolve(sub);
+    });
   }
 
   /**
@@ -60,7 +64,12 @@ export class SubscriptionManager implements ISubscriptionManager {
       } else
         subscription = this.#auth.subscriptions.all as Subscription;
 
-      return await Subscription.remove(auth, this.#auth.application, subscription);
+      await Subscription.remove(auth, this.#auth.application, subscription);
+
+      // Update the all cache
+      await this._getSubData();
+
+      resolve();
     })
   }
 }
