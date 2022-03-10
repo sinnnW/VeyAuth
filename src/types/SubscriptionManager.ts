@@ -51,7 +51,7 @@ export class SubscriptionManager implements ISubscriptionManager {
         if (!subscription)
           return reject('On applications with multiple subscriptions, you must supply the subscription to remove');
       } else
-        subscription = this.#auth.subscription.all as Subscription;
+        subscription = this.#auth.subscriptions.all as Subscription;
 
       return await Subscription.remove(auth, this.#auth.application, subscription);
     })
