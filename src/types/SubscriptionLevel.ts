@@ -18,6 +18,7 @@ export class SubscriptionLevel implements ISubscriptionLevel {
 
   // Completely hidden fields
   #changes = false;
+  #deleted = false;
   #prevName: string;
 
   get format(): string {
@@ -64,6 +65,9 @@ export class SubscriptionLevel implements ISubscriptionLevel {
     return new Promise<SubscriptionLevel>((resolve, reject) => {
       if (!this.#prevName)
         this.#prevName = this.name;
+
+      else if (this.#deleted)
+        return reject('Subscription level does not exist');
 
 			// If this is true, there are no changes to make
 			else if (!this.#changes)
@@ -115,6 +119,37 @@ export class SubscriptionLevel implements ISubscriptionLevel {
 					});
 				});
 			});
+    })
+  }
+
+  /**
+   * Remove the current subscription level
+   * @param {User} auth
+   * @returns {Promise<void>}
+   */
+  remove(auth: User): Promise<void> {
+    this.#deleted = true;
+    return SubscriptionLevel.remove(auth, this);
+  } 
+
+  /**
+   * Remove a subscription level
+   * @param {User} auth
+   * @param {SubscriptionLevel} subscriptionLevel 
+   * @returns {Promise<void>}
+   */
+  static remove(auth: User, subscriptionLevel: SubscriptionLevel): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      if (!auth?.permissions.has(FLAGS.DELETE_SUBSCRIPTION_LEVEL))
+        return reject('Invalid permissions');
+      
+      Core.logger.debug(`Deleting subscription level ${subscriptionLevel.format}`);
+      Core.db.run('DELETE FROM subscription_levels WHERE application_id = ? AND id = ?', [ subscriptionLevel.application.id, subscriptionLevel.id ], err => {
+        if (err)
+          return reject(err);
+        
+        return resolve();
+      })
     })
   }
 
