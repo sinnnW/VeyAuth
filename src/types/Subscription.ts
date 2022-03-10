@@ -78,7 +78,7 @@ export class Subscription implements ISubscription {
    */
   async remove(auth: User): Promise<void> {
     this.#deleted = true;
-    return Subscription.remove(auth, this.application, this);
+    return Subscription.remove(auth, this);
   }
 
   /**
@@ -88,13 +88,14 @@ export class Subscription implements ISubscription {
    * @param {Subscription} subscription
    * @returns {Promise<void>}
    */
-  static remove(auth: User, app: App, subscription: Subscription): Promise<void> {
+  static remove(auth: User, subscription: Subscription): Promise<void> {
     return new Promise((resolve, reject) => {
       if (!auth?.permissions.has(FLAGS.DELETE_SUBSCRIPTION))
         return reject('Invalid permissions');
 
       // Delete the shit
-      Core.db.run('DELETE FROM subscriptions WHERE application_id = ? AND id = ?', [ app.id, subscription.id ], async err => {
+      Core.logger.debug(`Deleting ${subscription.format}`);
+      Core.db.run('DELETE FROM subscriptions WHERE application_id = ? AND id = ?', [ subscription.application.id, subscription.id ], async err => {
         if (err)
           return reject(err);
 
