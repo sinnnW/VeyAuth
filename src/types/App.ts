@@ -29,6 +29,7 @@ export class App implements IApp {
 
 	// Internal var to detect if there is changes for saving
 	#changes = false;
+  #deleted = false;
 
 	// Internal var for previous name, since it has to check on save()
 	#prevName: string;
@@ -110,7 +111,10 @@ export class App implements IApp {
 	*/
 	save(auth: User): Promise<App> {
 		return new Promise<App>((resolve, reject) => {
-      if (this.id == -1)
+      if (this.#deleted)
+        return reject('Application does not exist');
+
+      else if (this.id == -1)
         return reject('This application cannot be modified'); 
         
       else if (!this.#prevName)
@@ -126,7 +130,7 @@ export class App implements IApp {
 
 			// Make sure all the required fields are filled
 			else if (!this.name || !this.owner || (!this.disabled && this.disabled != false))
-				return reject('Name, owner, and disabled are required.');
+				return reject('Name, owner, and disabled are required');
 
 			// Make sure the username doesn't contain special chars
 			else if (Utils.hasSpecialChars(this.name))
@@ -187,27 +191,30 @@ export class App implements IApp {
 		})
 	}
 
-	getVars(authToken: string, hwid: string): [Var] {
-		throw new Error("Not implemented");
+	remove(auth: User): Promise<void> {
+		this.#deleted = true;
+    return App.remove(auth, this); 
 	}
 
-	delete(auth: User): Promise<void> {
-		return new Promise((resolve, reject) => {
+  static remove(auth: User, app: App): Promise<void> {
+    return new Promise((resolve, reject) => {
 			// Make sure user has permission
-			if (!auth?.permissions.has(FLAGS.MODIFY_USERS, this.id))
+			if (!auth?.permissions.has(FLAGS.MODIFY_USERS, app.id))
 				return reject('Invalid permissions');
 
 			Core.db.serialize(() => {
-				Core.db.run('DELETE FROM applications WHERE id = ?', [this.id]);
-				Core.db.run('DELETE FROM users WHERE application_id = ?', [this.id]);
-        Core.db.run('DELETE FROM variables WHERE application_id = ?', [this.id]);
-				Core.db.run('DELETE FROM permissions WHERE application_id = ?', [this.id], () => {
-					Core.logger.debug(`Deleted application ${this.format}`);
+				Core.db.run('DELETE FROM applications WHERE id = ?', [app.id]);
+				Core.db.run('DELETE FROM users WHERE application_id = ?', [app.id]);
+        Core.db.run('DELETE FROM variables WHERE application_id = ?', [app.id]);
+        Core.db.run('DELETE FROM subscriptions WHERE application_id = ?', [app.id]);
+        Core.db.run('DELETE FROM subscription_levels WHERE application_id = ?', [app.id]);
+				Core.db.run('DELETE FROM permissions WHERE application_id = ?', [app.id], () => {
+					Core.logger.debug(`Deleted application ${app.format}`);
 					resolve();
 				});
 			})
 		})
-	}
+  }
 
 	/**
 	* Create an application
