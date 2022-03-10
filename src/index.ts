@@ -20,22 +20,22 @@ export class Core {
     Core.logger.info('Setting up tables and data...');
     Core.db.serialize(() => {
       // Applications table
-      Core.db.run('CREATE TABLE "applications" ( "id" INTEGER NOT NULL, "owner_id" INTEGER, "name" TEXT, "description" TEXT, "disabled" INTEGER NOT NULL DEFAULT 0, "disable_reason" BLOB DEFAULT \'No reason\', "subscriptions_enabled" INTEGER NOT NULL DEFAULT 0, "subscriptions_public" INTEGER NOT NULL DEFAULT 1, "subscriptions_multiple" INTEGER NOT NULL DEFAULT 0, "invite_required" INTEGER NOT NULL DEFAULT 0, "hwid_locked" INTEGER NOT NULL DEFAULT 0, "allow_user_self_deletion" INTEGER NOT NULL DEFAULT 1, PRIMARY KEY("id"))');
+      Core.db.run('CREATE TABLE IF NOT EXISTS "applications" ( "id" INTEGER NOT NULL, "owner_id" INTEGER, "name" TEXT, "description" TEXT, "disabled" INTEGER NOT NULL DEFAULT 0, "disable_reason" BLOB DEFAULT \'No reason\', "subscriptions_enabled" INTEGER NOT NULL DEFAULT 0, "subscriptions_public" INTEGER NOT NULL DEFAULT 1, "subscriptions_multiple" INTEGER NOT NULL DEFAULT 0, "invite_required" INTEGER NOT NULL DEFAULT 0, "hwid_locked" INTEGER NOT NULL DEFAULT 0, "allow_user_self_deletion" INTEGER NOT NULL DEFAULT 1, PRIMARY KEY("id"))');
 
       // User table
-      Core.db.run('CREATE TABLE "users" ( "id" INTEGER NOT NULL, "application_id" INTEGER NOT NULL, "username" INTEGER NOT NULL, "password" TEXT NOT NULL, "token" TEXT NOT NULL, "disabled" INTEGER NOT NULL DEFAULT 0, "disable_reason" TEXT DEFAULT \'No reason\', "hwid" TEXT, PRIMARY KEY("application_id","id"))');
+      Core.db.run('CREATE TABLE IF NOT EXISTS "users" ( "id" INTEGER NOT NULL, "application_id" INTEGER NOT NULL, "username" INTEGER NOT NULL, "password" TEXT NOT NULL, "token" TEXT NOT NULL, "disabled" INTEGER NOT NULL DEFAULT 0, "disable_reason" TEXT DEFAULT \'No reason\', "hwid" TEXT, PRIMARY KEY("application_id","id"))');
 
       // Permissions table
-      Core.db.run('CREATE TABLE "permissions" ( "application_id" INTEGER NOT NULL, "user_id" INTEGER NOT NULL, "permissions" INTEGER NOT NULL, PRIMARY KEY("application_id","user_id"))');
+      Core.db.run('CREATE TABLE IF NOT EXISTS "permissions" ( "application_id" INTEGER NOT NULL, "user_id" INTEGER NOT NULL, "permissions" INTEGER NOT NULL, PRIMARY KEY("application_id","user_id"))');
       
       // Subcription levels table
-      Core.db.run('CREATE TABLE "subscription_levels" ( "id" INTEGER NOT NULL, "application_id" INTEGER NOT NULL, "name" TEXT NOT NULL, "description" TEXT, "disabled" INTEGER NOT NULL DEFAULT 0, "disable_reason" TEXT DEFAULT \'No reason\', PRIMARY KEY("id"))');
+      Core.db.run('CREATE TABLE IF NOT EXISTS "subscription_levels" ( "id" INTEGER NOT NULL, "application_id" INTEGER NOT NULL, "name" TEXT NOT NULL, "description" TEXT, "disabled" INTEGER NOT NULL DEFAULT 0, "disable_reason" TEXT DEFAULT \'No reason\', PRIMARY KEY("id"))');
       
       // Subscriptions table
-      Core.db.run('CREATE TABLE "subscriptions" ( "id" INTEGER NOT NULL, "application_id" INTEGER NOT NULL, "user_id" INTEGER NOT NULL, "level_id" INTEGER NOT NULL, "expires_at" INTEGER DEFAULT 0, "disabled" INTEGER NOT NULL DEFAULT 0, "disable_reason" TEXT DEFAULT \'No reason\', PRIMARY KEY("id","application_id"))');
+      Core.db.run('CREATE TABLE IF NOT EXISTS "subscriptions" ( "id" INTEGER NOT NULL, "application_id" INTEGER NOT NULL, "user_id" INTEGER NOT NULL, "level_id" INTEGER NOT NULL, "expires_at" INTEGER DEFAULT 0, "disabled" INTEGER NOT NULL DEFAULT 0, "disable_reason" TEXT DEFAULT \'No reason\', PRIMARY KEY("id","application_id"))');
 
       // Variable table
-      Core.db.run('CREATE TABLE "variables" ( "application_id" INTEGER NOT NULL, "user_id" INTEGER, "key" INTEGER NOT NULL, "value" INTEGER, "private" INTEGER NOT NULL DEFAULT 1, PRIMARY KEY("application_id","user_id","user_id","key"))');
+      Core.db.run('CREATE TABLE IF NOT EXISTS "variables" ( "application_id" INTEGER NOT NULL, "user_id" INTEGER, "key" INTEGER NOT NULL, "value" INTEGER, "private" INTEGER NOT NULL DEFAULT 1, PRIMARY KEY("application_id","user_id","user_id","key"))');
 
       // Create a application named Global, this is the global permissions
       Core.db.run('INSERT OR IGNORE INTO applications (id, name) VALUES (-1, "Global")');
