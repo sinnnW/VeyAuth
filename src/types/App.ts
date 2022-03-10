@@ -121,11 +121,11 @@ export class App implements IApp {
 				return resolve(this);
 
 			// Make sure that they have permission
-			else if (!auth?.permissions.has(FLAGS.MODIFY_USERS, this.id))
+			else if (!auth?.permissions.has(FLAGS.ADMIN, this.id) && this.owner.id != auth.id)
 				return reject('Invalid permissions')
 
 			// Make sure all the required fields are filled
-			else if (!this.name || !this.owner || (!this.disabled && this.disabled !== false))
+			else if (!this.name || !this.owner || (!this.disabled && this.disabled != false))
 				return reject('Name, owner, and disabled are required.');
 
 			// Make sure the username doesn't contain special chars
