@@ -20,6 +20,7 @@ export class Subscription implements ISubscription {
 
   // Completely private vars
   #changes = false;
+  #deleted = false;
 
   get format(): string {
     return `(SubscriptionID: ${this.id} [User: ${this.user.format}] [App: ${this.application.format}])`;
@@ -41,8 +42,11 @@ export class Subscription implements ISubscription {
    */
   save(auth: User): Promise<Subscription> {
     return new Promise((resolve, reject) => {
+      if (this.#deleted)
+        return reject('Subscription does not exist');
+
 			// If this is true, there are no changes to make
-			if (!this.#changes)
+			else if (!this.#changes)
 				return resolve(this);
 
 			// Make sure that they have permission
@@ -73,6 +77,7 @@ export class Subscription implements ISubscription {
    * @returns {Promise<void>}
    */
   async remove(auth: User): Promise<void> {
+    this.#deleted = true;
     return Subscription.remove(auth, this.application, this);
   }
 
