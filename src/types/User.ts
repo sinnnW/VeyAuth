@@ -25,7 +25,7 @@ export class User implements IUser {
   disabled: boolean = false;
   disableReason?: string = 'No reason';
   application: App;
-  subscription: SubscriptionManager;
+  subscriptions: SubscriptionManager;
 
   // Internal var to detect if there is changes for saving
   #changes = false;
@@ -388,12 +388,12 @@ export class User implements IUser {
         usr.permissions = new UserPermissionsArray(FLAGS.USER, usr);//[-1, new UserPermissions(data.permissions)];
         usr.token = data.token;
         usr.password = data.password;
-        usr.subscription = new SubscriptionManager(usr);
+        usr.subscriptions = new SubscriptionManager(usr);
         usr.disabled = data.disabled == 1 ? true : false;
         usr.disableReason = data.disable_reason;
 
         // Gotta pull the sub information
-        await usr.subscription._getSubData();
+        await usr.subscriptions._getSubData();
 
         // Application specified permissions
         Core.db.all('SELECT * FROM permissions WHERE user_id = ?', [usr.id], (err2, row2: any) => {
