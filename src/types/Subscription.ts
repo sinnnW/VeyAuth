@@ -18,15 +18,95 @@ export class Subscription implements ISubscription {
   level: SubscriptionLevel;
   expiresAt?: Date;
 
+  // Completely private vars
+  #changes = false;
+
+  get format(): string {
+    return `(SubscriptionID ${this.id} [User: ${this.user.format}] [App: ${this.application.format}])`;
+  }
+
+  /**
+   * Set the new date that the subscription expires at
+   * @param newDate 
+   */
+  setExpiresAt(newDate: Date) {
+    this.#changes = true;
+    this.expiresAt = newDate;
+  }
+
+  /**
+   * Save any staged changes
+   * @param auth 
+   * @returns {Promise<Subscription>} Updated subscription
+   */
+  save(auth: User): Promise<Subscription> {
+    return new Promise((resolve, reject) => {
+			// If this is true, there are no changes to make
+			if (!this.#changes)
+				return resolve(this);
+
+			// Make sure that they have permission
+			else if (!auth?.permissions.has(FLAGS.MODIFY_SUBSCRIPTION, this.id))
+				return reject('Invalid permissions')
+
+			Core.logger.debug(`Saving subscription information for ${this.format}, auth: ${auth.format}`);
+      // Run all the save commands
+      Core.db.serialize(() => {
+        // Update disable_reason
+        Core.db.run('UPDATE subscriptions SET expires_at = ? WHERE id = ?', [(this.expiresAt?.getTime() || 1000) - 1000, this.id], async () => {
+          Core.logger.debug('Updated disable_reason');
+
+          // Updates were saved
+          this.#changes = false;
+
+          // Return the updated user
+          Core.logger.debug(`Saved application information for ${this.format}`);
+          return resolve(this);
+        });
+      });
+    })
+  }
+
+  /**
+   * Remove the current subscription
+   * @param {User} auth 
+   * @returns {Promise<void>}
+   */
+  async remove(auth: User): Promise<void> {
+    return Subscription.remove(auth, this.application, this);
+  }
+
+  /**
+   * Remove an existing subscription
+   * @param {User} auth 
+   * @param {App} app 
+   * @param {Subscription} subscription
+   * @returns {Promise<void>}
+   */
+  static remove(auth: User, app: App, subscription: Subscription): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!auth?.permissions.has(FLAGS.DELETE_SUBSCRIPTION))
+        return reject('Invalid permissions');
+
+      // Delete the shit
+      Core.db.run('DELETE FROM subscriptions WHERE application_id = ? AND id = ?', [ app.id, subscription.id ], async err => {
+        if (err)
+          return reject(err);
+
+        return resolve();
+      });
+    })
+  }
+
   /**
    * Create a new subscription for a user
-   * @param auth 
-   * @param app 
-   * @param user 
-   * @param subscriptionLevel 
-   * @param expiresAt 
-   * @param overwrite Should we overwrite a previous subscription on the user (if it exists, and application only allows one subscription at a time)
-   * @returns
+   * @param {User} auth 
+   * @param {App} app 
+   * @param {User} user 
+   * @param {SubscriptionLevel} subscriptionLevel 
+   * @param {Date} expiresAt 
+   * @param {boolean} overwrite Should we overwrite a previous subscription on the user (if it exists, and application only allows one subscription at a time)
+   * @returns {Promise<Subscription>}
    */
   static create(auth: User, app: App, user: User, subscriptionLevel: SubscriptionLevel, expiresAt: Date, overwrite?: boolean): Promise<Subscription> {
     return new Promise<Subscription>(async (resolve, reject) => {
