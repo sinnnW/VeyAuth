@@ -29,6 +29,7 @@ export class User implements IUser {
 
   // Internal var to detect if there is changes for saving
   #changes = false;
+  #deleted = false;
 
   // Internal var for previous name, since it has to check on save()
 
@@ -138,8 +139,11 @@ export class User implements IUser {
       if (!this.#prevUsername)
         this.#prevUsername = this.username;
 
+      else if (this.#deleted)
+        return reject('User does not exist');
+
       // If this is true, there are no changes to make
-      if (!this.#changes)
+      else if (!this.#changes)
         return resolve(this);
 
       // Make sure that they have permission
@@ -202,17 +206,22 @@ export class User implements IUser {
    * This will delete the current user
    * @param User User with permission to delete their profile
    */
-  delete(auth: User): Promise<void> {
+  remove(auth: User): Promise<void> {
+    this.#deleted = true;
+    return User.remove(auth, this);
+  }
+
+  static remove(auth: User, user: User): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (!auth?.permissions.has(FLAGS.DELETE_USERS) && !(this.application.allowUserSelfDeletion && this.authenticated))
+      if (!auth?.permissions.has(FLAGS.DELETE_USERS) && !(user.application.allowUserSelfDeletion && user.authenticated))
         return reject('Invalid permissions');
 
       Core.db.serialize(() => {
-        Core.db.run('DELETE FROM users WHERE id = ?', [this.id]);
-        Core.db.run('DELETE FROM applications WHERE owner_id = ?', [this.id]);
-        Core.db.run('DELETE FROM variables WHERE user_id = ?', [this.id]);
-        Core.db.run('DELETE FROM permissions WHERE user_id = ?', [this.id], () => {
-          Core.logger.debug(`Deleted user ${this.format}`);
+        Core.db.run('DELETE FROM users WHERE id = ?', [user.id]);
+        Core.db.run('DELETE FROM applications WHERE owner_id = ?', [user.id]);
+        Core.db.run('DELETE FROM variables WHERE user_id = ?', [user.id]);
+        Core.db.run('DELETE FROM permissions WHERE user_id = ?', [user.id], () => {
+          Core.logger.debug(`Deleted user ${user.format}`);
           resolve();
         });
       });
