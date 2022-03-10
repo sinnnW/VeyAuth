@@ -36,9 +36,16 @@ export class SubscriptionManager implements ISubscriptionManager {
   }
   
   /**
-   * Create a new subscription
+   * Subscribe to a certain level
+   * @param {User} auth 
+   * @param {SubscriptionLevel} subscriptionLevel 
+   * @param {Date} expiresAt 
+   * @param {boolean} overwrite Should it overwrite any other subscriptions (on multi subscription applications)
+   * @returns {Promise<Subscription>} Subscription created
    */
-  subscribe = Subscription.create;
+  subscribe(auth: User, subscriptionLevel: SubscriptionLevel, expiresAt: Date, overwrite?: boolean): Promise<Subscription> {
+    return Subscription.create(auth, this.#auth.application, this.#auth, subscriptionLevel, expiresAt, overwrite);
+  }
 
   /**
    * Remove a subscription
@@ -56,17 +63,4 @@ export class SubscriptionManager implements ISubscriptionManager {
       return await Subscription.remove(auth, this.#auth.application, subscription);
     })
   }
-  
-  // getLevel(): Promise<SubscriptionLevel> {
-  //   return SubscriptionLevel.get()
-  // }
-  // getSubscriptionLevel = SubscriptionLevel.getById;
-
-  // getSubscription(app?: App, user?: User): Promise<Subscription> {
-    
-  // }
-
-  // getSubscriptionLevel(name?: string): Promise<SubscriptionLevel> {
-
-  // }
 }
