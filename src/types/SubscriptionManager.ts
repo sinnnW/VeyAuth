@@ -45,8 +45,16 @@ export class SubscriptionManager implements ISubscriptionManager {
    * @param subscription 
    * @returns {Promise<void>}
    */
-  unsubscribe(auth: User, subscription: Subscription): Promise<void> {
-    return Subscription.remove(auth, this.#auth.application, subscription);
+  unsubscribe(auth: User, subscription?: Subscription): Promise<void> {
+    return new Promise(async (resolve, reject) => {
+      if (this.#auth.application.multipleSubscriptions) {
+        if (!subscription)
+          return reject('On applications with multiple subscriptions, you must supply the subscription to remove');
+      } else
+        subscription = this.#auth.subscription.subscriptions as Subscription;
+
+      return await Subscription.remove(auth, this.#auth.application, subscription);
+    })
   }
   
   // getLevel(): Promise<SubscriptionLevel> {
