@@ -22,7 +22,7 @@ export class Subscription implements ISubscription {
   #changes = false;
 
   get format(): string {
-    return `(SubscriptionID ${this.id} [User: ${this.user.format}] [App: ${this.application.format}])`;
+    return `(SubscriptionID: ${this.id} [User: ${this.user.format}] [App: ${this.application.format}])`;
   }
 
   /**
@@ -147,7 +147,7 @@ export class Subscription implements ISubscription {
       if (auth?.id != user?.id && !auth?.permissions.has(FLAGS.VIEW_SUBSCRIPTION))
         return reject('Invalid permissions');
 
-      Core.db.all(`SELECT * FROM subscriptions WHERE application_id = ? AND user_id = ? ${id ? 'AND id = ?' : ''}`, [ app.id, user.id, id ], (err, data) => {
+      Core.db.all(`SELECT * FROM subscriptions WHERE application_id = ? AND user_id = ? ${id ? 'AND id = ?' : ''}`, [ app.id, user.id, id ], async (err, data) => {
         // Reject errors
         if (err)
           return reject(err);
@@ -162,7 +162,7 @@ export class Subscription implements ISubscription {
 
         // Return the data
         else
-          return resolve(Subscription.fill(auth, !app.multipleSubscriptions ? data[0] : data, user));
+          return resolve(await Subscription.fill(auth, !app.multipleSubscriptions ? data[0] : data, user));
       })
     })
   }
