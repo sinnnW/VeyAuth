@@ -7,7 +7,7 @@ import { FLAGS } from './UserPermissions';
 import { Core } from '..';
 
 export class SubscriptionManager implements ISubscriptionManager {
-  subscriptions: [Subscription] | Subscription | null;
+  all: [Subscription] | Subscription | null;
 
   // This is a completely hidden variable that is used internally only.
   #auth: User;
@@ -25,11 +25,11 @@ export class SubscriptionManager implements ISubscriptionManager {
     return new Promise<void>(async (resolve, reject) => {
       var data = await Subscription.get(this.#auth, this.#auth.application, this.#auth)
         .catch(() => {
-          this.subscriptions = null;
+          this.all = null;
         })
     
       // console.log(data)
-      this.subscriptions = data as [Subscription] | Subscription;
+      this.all = data as [Subscription] | Subscription;
 
       return resolve();
     })
@@ -51,7 +51,7 @@ export class SubscriptionManager implements ISubscriptionManager {
         if (!subscription)
           return reject('On applications with multiple subscriptions, you must supply the subscription to remove');
       } else
-        subscription = this.#auth.subscription.subscriptions as Subscription;
+        subscription = this.#auth.subscription.all as Subscription;
 
       return await Subscription.remove(auth, this.#auth.application, subscription);
     })
