@@ -19,8 +19,6 @@ export class SubscriptionManager implements ISubscriptionManager {
   constructor(auth: User) {
     // Set the parent
     this.#auth = auth;
-
-    
   }
 
   _getSubData(): Promise<void> {
@@ -37,8 +35,19 @@ export class SubscriptionManager implements ISubscriptionManager {
     })
   }
   
-  // Aliasing
+  /**
+   * Create a new subscription
+   */
   subscribe = Subscription.create;
+
+  /**
+   * Remove a subscription
+   * @param subscription 
+   * @returns {Promise<void>}
+   */
+  unsubscribe(auth: User, subscription: Subscription): Promise<void> {
+    return Subscription.remove(auth, this.#auth.application, subscription);
+  }
   
   // getLevel(): Promise<SubscriptionLevel> {
   //   return SubscriptionLevel.get()
