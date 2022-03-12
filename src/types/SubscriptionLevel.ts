@@ -66,7 +66,7 @@ export class SubscriptionLevel implements ISubscriptionLevel {
       if (!this.#prevName)
         this.#prevName = this.name;
 
-      else if (this.#deleted)
+      if (this.#deleted)
         return reject('Subscription level does not exist');
 
 			// If this is true, there are no changes to make

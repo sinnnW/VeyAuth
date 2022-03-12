@@ -139,7 +139,7 @@ export class User implements IUser {
       if (!this.#prevUsername)
         this.#prevUsername = this.username;
 
-      else if (this.#deleted)
+      if (this.#deleted)
         return reject('User does not exist');
 
       // If this is true, there are no changes to make

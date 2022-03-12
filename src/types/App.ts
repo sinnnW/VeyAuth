@@ -121,7 +121,7 @@ export class App implements IApp {
         this.#prevName = this.name;
 
 			// If this is true, there are no changes to make
-			else if (!this.#changes)
+			if (!this.#changes)
 				return resolve(this);
 
 			// Make sure that they have permission
