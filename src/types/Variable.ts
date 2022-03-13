@@ -176,6 +176,22 @@ export class Variable implements IVariable {
     })
   }
 
+  static getAll(auth: User): Promise<[Variable]> {
+    return new Promise<[Variable]>((reject, resolve) => {
+      Core.db.all('SELECT * FROM variables WHERE application_id = ?', [ auth.application.id ], async (err, data) => {
+        let vars = [];
+        for (var x = 0;x < data.length;x++) {
+          if ((data[x].private && !auth.permissions.has(FLAGS.VIEW_PRIVATE_VARS)) && (auth.id != data[x].user_id))
+            continue;
+
+          vars.push(await Variable.fill(data[x]));
+        }
+
+        return resolve(vars);
+      });
+    })
+  }
+
   /**
    * Create a new variable for an application/user
    * @param auth 
