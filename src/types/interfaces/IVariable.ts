@@ -1,8 +1,8 @@
-import { Var } from '../Var';
+import { Variable } from '../Variable';
 import { App } from '../App';
 import { User } from '../User';
 
-export interface IVar {
+export interface IVariable {
   key: string;
   value: string;
   private: boolean;
@@ -12,7 +12,7 @@ export interface IVar {
   setKey(key: string): void;
   setValue(value: string): void;
   setPrivate(priv: boolean): void;
-  save(auth: User): Promise<Var>;
+  save(auth: User): Promise<Variable>;
 
   delete(auth: User): void;
 }

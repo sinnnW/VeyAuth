@@ -1,11 +1,11 @@
-import { IVar } from './interfaces/IVar';
+import { IVariable } from './interfaces/IVariable';
 import { Utils } from '../utils/Utils';
 import { App } from './App';
 import { User } from './User';
 import { Core } from '..';
 import { FLAGS } from './UserPermissions';
 
-export class Var implements IVar {
+export class Variable implements IVariable {
   key: string;
   value: string;
   private: boolean;
@@ -54,8 +54,8 @@ export class Var implements IVar {
    * @param auth 
    * @returns {Promise<Var>} Updated var
    */
-  save(auth: User): Promise<Var> {
-    return new Promise<Var>((resolve, reject) => {
+  save(auth: User): Promise<Variable> {
+    return new Promise<Variable>((resolve, reject) => {
       if (!this.#prevKeyName)
         this.#prevKeyName = this.key;
 
@@ -129,9 +129,9 @@ export class Var implements IVar {
    * @param rawSql 
    * @returns {Promise<Var>} Finished variable
    */
-  static fill(rawSql: any): Promise<Var> {
-    return new Promise<Var>(async (resolve, reject) => {
-      var v = new Var();
+  static fill(rawSql: any): Promise<Variable> {
+    return new Promise<Variable>(async (resolve, reject) => {
+      var v = new Variable();
 
       // Set the values
       v.key = rawSql.key;
@@ -154,7 +154,7 @@ export class Var implements IVar {
    * @param key 
    * @returns {Promise<Var>} Variable found
    */
-  static get(auth: User | null, app: App, user: User | null, key: string): Promise<Var> {
+  static get(auth: User | null, app: App, user: User | null, key: string): Promise<Variable> {
     return new Promise((resolve, reject) => {
       Core.db.get(`SELECT * FROM variables WHERE application_id = ? AND user_id ${user?.id ? '=' : 'IS'} ? AND key = ?`, [ app.id, user?.id, key ], async (err, data) => {
         // Make sure there was not an error
@@ -171,7 +171,7 @@ export class Var implements IVar {
 
         // All good to return the variable
         else
-          return resolve(await Var.fill(data));
+          return resolve(await Variable.fill(data));
       })
     })
   }
@@ -186,14 +186,14 @@ export class Var implements IVar {
    * @param priv Private
    * @returns {Promise<Var>} The created variable
    */
-  static create(auth: User, app: App, user: User | null, key: string, value: string, priv: boolean): Promise<Var> {
-    return new Promise<Var>(async (resolve, reject) => {
+  static create(auth: User, app: App, user: User | null, key: string, value: string, priv: boolean): Promise<Variable> {
+    return new Promise<Variable>(async (resolve, reject) => {
       // Make sure they have permission
       if (!auth?.permissions.has(FLAGS.CREATE_VARS, app.id))
         return reject('Invalid permissions');
 
       // This will only get assigned if it got a actual variable
-      let v = await Var.get(auth, app, user, key)
+      let v = await Variable.get(auth, app, user, key)
         .catch(() => {});
 
       // Make sure it doesnt already exist
@@ -205,7 +205,7 @@ export class Var implements IVar {
           return reject(err);
         else {
           Core.logger.debug(`Created new variable under app ${app.format} ${user ? `and user ${user.format}` : ''} with key ${key} and value ${value} (private: ${priv})`);
-          return resolve(await Var.get(auth, app, user, key));
+          return resolve(await Variable.get(auth, app, user, key));
         }
       });
     })

@@ -72,6 +72,6 @@ export class Core {
 // Other modules export last, since database needs to be initialized
 export { App } from './types/App';
 export { User } from './types/User';
-export { Var } from './types/Var';
+export { Variable } from './types/Variable';
 export { Subscription } from './types/Subscription';
 export { SubscriptionLevel } from './types/SubscriptionLevel';

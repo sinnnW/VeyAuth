@@ -1,5 +1,5 @@
 import { IBase } from './IBase';
-import { IVar } from './IVar';
+import { IVariable } from './IVariable';
 import { User } from '../User';
 
 export interface IApp extends IBase {
