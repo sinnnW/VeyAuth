@@ -1,5 +1,4 @@
 import { IApp } from './interfaces/IApp';
-import { Var } from './Var';
 import { User } from './User';
 import { Core } from '..';
 import { Utils } from '../utils/Utils';
