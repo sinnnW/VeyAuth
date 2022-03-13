@@ -64,7 +64,7 @@ export class SubscriptionManager implements ISubscriptionManager {
       } else
         subscription = this.#auth.subscriptions.all as Subscription;
 
-      await Subscription.remove(auth, this.#auth.application, subscription);
+      await Subscription.remove(auth, subscription);
 
       // Update the all cache
       await this._getSubData();
