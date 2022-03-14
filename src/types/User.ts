@@ -6,6 +6,7 @@ import { App } from './App';
 import { Utils } from '../utils/Utils';
 import { SecurityHelper } from '../utils/SecurityHelper';
 import { SubscriptionManager } from './SubscriptionManager';
+import { Variable } from './Variable';
 
 enum GET_FLAGS {
   GET_BY_ID,
@@ -25,7 +26,9 @@ export class User implements IUser {
   disabled: boolean = false;
   disableReason?: string = 'No reason';
   application: App;
+
   subscriptions: SubscriptionManager;
+  variables: [Variable];
 
   // Internal var to detect if there is changes for saving
   #changes = false;
@@ -398,9 +401,12 @@ export class User implements IUser {
         usr.token = data.token;
         usr.password = data.password;
         usr.subscriptions = new SubscriptionManager(usr);
+        // usr.variables = (await Variable.getAll(usr)).filter(itm => itm.user) as [Variable];
         usr.disabled = data.disabled == 1 ? true : false;
         usr.disableReason = data.disable_reason;
 
+        console.log('cehcking')
+        console.log((await Variable.getAll(usr)))
         // Gotta pull the sub information
         await usr.subscriptions._getSubData();
 
