@@ -129,7 +129,7 @@ export class Variable implements IVariable {
    * @param rawSql 
    * @returns {Promise<Var>} Finished variable
    */
-  static fill(rawSql: any): Promise<Variable> {
+  static fill(rawSql: any, app?: App | null, user?: User | null): Promise<Variable> {
     return new Promise<Variable>(async (resolve, reject) => {
       var v = new Variable();
 
@@ -137,9 +137,15 @@ export class Variable implements IVariable {
       v.key = rawSql.key;
       v.value = rawSql.value;
       v.private = rawSql.private;
-      v.application = await App.get(rawSql.application_id);
+
+      if (app)
+        v.application = app;
+      else
+        v.application = await App.get(rawSql.application_id);
   
-      if (rawSql.user_id)
+      if (user)
+        v.user = user;
+      else if (rawSql.user_id)
         v.user = await User.get(rawSql.user_id);
 
       return resolve(v);
@@ -171,23 +177,26 @@ export class Variable implements IVariable {
 
         // All good to return the variable
         else
-          return resolve(await Variable.fill(data));
+          return resolve(await Variable.fill(data, app, user));
       })
     })
   }
 
   static getAll(auth: User): Promise<[Variable]> {
-    return new Promise<[Variable]>((reject, resolve) => {
-      Core.db.all('SELECT * FROM variables WHERE application_id = ?', [ auth.application.id ], async (err, data) => {
+    return new Promise<[Variable]>((resolve, reject) => {
+      Core.db.all('SELECT * FROM variables WHERE application_id = ?', [ auth.application.id ], async (err, data: any) => {
+        if (err)
+          return reject(err);
+
         let vars = [];
         for (var x = 0;x < data.length;x++) {
           if ((data[x].private && !auth.permissions.has(FLAGS.VIEW_PRIVATE_VARS)) && (auth.id != data[x].user_id))
             continue;
 
-          vars.push(await Variable.fill(data[x]));
+          vars.push(await Variable.fill(data[x], auth.application, auth ));
         }
 
-        return resolve(vars);
+        return resolve(vars as [Variable]);
       });
     })
   }

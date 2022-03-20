@@ -401,12 +401,10 @@ export class User implements IUser {
         usr.token = data.token;
         usr.password = data.password;
         usr.subscriptions = new SubscriptionManager(usr);
-        // usr.variables = (await Variable.getAll(usr)).filter(itm => itm.user) as [Variable];
+        usr.variables = (await Variable.getAll(usr)).filter(itm => itm.user) as [Variable];
         usr.disabled = data.disabled == 1 ? true : false;
         usr.disableReason = data.disable_reason;
 
-        console.log('cehcking')
-        console.log((await Variable.getAll(usr)))
         // Gotta pull the sub information
         await usr.subscriptions._getSubData();
 
