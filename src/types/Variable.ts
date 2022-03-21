@@ -211,7 +211,7 @@ export class Variable implements IVariable {
    * @param priv Private
    * @returns {Promise<Var>} The created variable
    */
-  static create(auth: User, app: App, user: User | null, key: string, value: string, priv: boolean): Promise<Variable> {
+  static create(auth: User, app: App, user: User | null, key: string, value: string, priv: boolean = true): Promise<Variable> {
     return new Promise<Variable>(async (resolve, reject) => {
       // Make sure they have permission
       if (!auth?.permissions.has(FLAGS.CREATE_VARS, app.id))
