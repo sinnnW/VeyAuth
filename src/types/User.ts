@@ -6,7 +6,7 @@ import { App } from './App';
 import { Utils } from '../utils/Utils';
 import { SecurityHelper } from '../utils/SecurityHelper';
 import { SubscriptionManager } from './SubscriptionManager';
-import { VariableManager } from './VariableManager';
+import { Variable } from './Variable';
 
 enum GET_FLAGS {
   GET_BY_ID,
@@ -28,7 +28,7 @@ export class User implements IUser {
   application: App;
 
   subscriptions: SubscriptionManager;
-  variables: VariableManager;
+  variables: Variable[];
 
   // Internal var to detect if there is changes for saving
   #changes = false;
@@ -402,15 +402,13 @@ export class User implements IUser {
         usr.password = data.password;
         usr.disabled = data.disabled == 1 ? true : false;
         usr.disableReason = data.disable_reason;
+        usr.variables = (await Variable.getAll(usr)).filter(itm => itm.user) as Variable[];
 
         // Managers
         usr.subscriptions = new SubscriptionManager(usr);
-        usr.variables = new VariableManager(usr);
 
         // Gotta pull the sub information
         await usr.subscriptions._getData();
-        await usr.variables._getData();
-        // usr.variables = (await Variable.getAll(usr)).filter(itm => itm.user) as [Variable];
 
         // Application specified permissions
         Core.db.all('SELECT * FROM permissions WHERE user_id = ?', [usr.id], (err2, row2: any) => {

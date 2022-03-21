@@ -3,10 +3,10 @@ import { IBitField } from '../types/interfaces/IBitField';
 
 export class BitField implements IBitField {
   field: number;
-  overrides: [any];
+  overrides: any[];
   FLAGS: any;
 
-  constructor(flags: any, bitfield: number = 0, overrides: [any]) {
+  constructor(flags: any, bitfield: number = 0, overrides: any[]) {
     this.FLAGS = flags;
     this.field = bitfield;
     this.overrides = overrides;

@@ -4,16 +4,22 @@ import { User } from './User';
 import { Core } from '..';
 
 export class VariableManager implements IVariableManager {
-  user: [Variable];
-  application: [Variable];
+  all: Variable[];
+  user: Variable[];
+  application: Variable[];
   
   #auth: User;
 
   constructor(auth: User) {
     this.#auth = auth;
+
+    // Instantiate
+    this.all = [];
+    this.user = [];
+    this.application = [];
   }
 
-  _getVarData(): Promise<void> {
+  _getData(): Promise<void> {
     return new Promise(async (resolve, reject) => {
       // Remove all items in array
       this.user.splice(0, this.user.length);
@@ -28,6 +34,8 @@ export class VariableManager implements IVariableManager {
           this.user.push(vars[x]);
         else
           this.application.push(vars[x]);
+
+        this.all.push(vars[x]);
       }
 
       return resolve();
