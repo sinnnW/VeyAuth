@@ -19,7 +19,7 @@ export class SubscriptionManager implements ISubscriptionManager {
     this.#auth = auth;
   }
 
-  _getSubData(): Promise<void> {
+  _getData(): Promise<void> {
     return new Promise<void>(async (resolve, reject) => {
       this.all = null;
       var data = await Subscription.get(this.#auth, this.#auth.application, this.#auth)
@@ -45,7 +45,7 @@ export class SubscriptionManager implements ISubscriptionManager {
       var sub = await Subscription.create(auth, this.#auth.application, this.#auth, subscriptionLevel, expiresAt || new Date(0), overwrite);
       
       // Update the all cache
-      await this._getSubData();
+      await this._getData();
 
       return resolve(sub);
     });
@@ -67,7 +67,7 @@ export class SubscriptionManager implements ISubscriptionManager {
       await Subscription.remove(auth, subscription);
 
       // Update the all cache
-      await this._getSubData();
+      await this._getData();
 
       resolve();
     })
