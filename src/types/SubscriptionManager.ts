@@ -5,7 +5,7 @@ import { ISubscriptionManager } from './interfaces/ISubscriptionManager';
 import { Core } from '..';
 
 export class SubscriptionManager implements ISubscriptionManager {
-  all: [Subscription] | Subscription | null;
+  all: Subscription[] | Subscription | null;
 
   // This is a completely hidden variable that is used internally only.
   #auth: User;
@@ -26,7 +26,7 @@ export class SubscriptionManager implements ISubscriptionManager {
         .catch(() => {});
     
       // console.log(data)
-      this.all = data as [Subscription] | Subscription;
+      this.all = data as Subscription[] | Subscription;
 
       return resolve();
     })

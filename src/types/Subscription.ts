@@ -148,8 +148,8 @@ export class Subscription implements ISubscription {
     })
   }
 
-  static get(auth: User | null, app: App, user: User, id?: number): Promise<[Subscription] | Subscription> {
-    return new Promise<[Subscription] | Subscription>((resolve, reject) => {
+  static get(auth: User | null, app: App, user: User, id?: number): Promise<Subscription[] | Subscription> {
+    return new Promise<Subscription[] | Subscription>((resolve, reject) => {
       if (auth?.id != user?.id && !auth?.permissions.has(FLAGS.VIEW_SUBSCRIPTION))
         return reject('Invalid permissions');
 
@@ -173,8 +173,8 @@ export class Subscription implements ISubscription {
     })
   }
 
-  static fill(auth: User, data: any, parent?: User): Promise<[Subscription] | Subscription> {
-    return new Promise<[Subscription] | Subscription>(async (resolve, reject) => {
+  static fill(auth: User, data: any, parent?: User): Promise<Subscription[] | Subscription> {
+    return new Promise<Subscription[] | Subscription>(async (resolve, reject) => {
       if (data.length) {
         let subArr = [];
   
@@ -192,7 +192,7 @@ export class Subscription implements ISubscription {
           subArr.push(sub);
         }
   
-        return resolve(subArr as [Subscription]);
+        return resolve(subArr as Subscription[]);
       } else {
         var sub = new Subscription();
 

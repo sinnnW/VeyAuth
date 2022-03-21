@@ -182,8 +182,8 @@ export class Variable implements IVariable {
     })
   }
 
-  static getAll(auth: User): Promise<[Variable]> {
-    return new Promise<[Variable]>((resolve, reject) => {
+  static getAll(auth: User): Promise<Variable[]> {
+    return new Promise<Variable[]>((resolve, reject) => {
       Core.db.all('SELECT * FROM variables WHERE application_id = ?', [ auth.application.id ], async (err, data: any) => {
         if (err)
           return reject(err);
@@ -196,7 +196,7 @@ export class Variable implements IVariable {
           vars.push(await Variable.fill(data[x], auth.application, auth ));
         }
 
-        return resolve(vars as [Variable]);
+        return resolve(vars as Variable[]);
       });
     })
   }
