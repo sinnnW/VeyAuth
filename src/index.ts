@@ -10,7 +10,7 @@ export class Core {
 
   constructor(loggerOpts: LoggerOptions) {
     Core.logger = createLogger(loggerOpts);
-    Core.logger.info('Starting VeyCore by verlox...');
+    Core.logger.info('Starting VeyAuth by verlox...');
     Core.db = new Database(`${__dirname}/auth.db`);
 
     // Load .env vars
@@ -65,7 +65,7 @@ export class Core {
       Core.logger.info(`[ENV] PASSWORD_SALT is ${process.env.PASSWORD_SALT}`);
 
     // Finished loading this shitshow
-    Core.logger.info('Finished loading VeyCore!');
+    Core.logger.info('Finished loading VeyAuth!');
   }
 }
 
