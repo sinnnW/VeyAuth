@@ -9,3 +9,4 @@ notes.txt
 test.js
 statistics.js
 *.env
+*.test.txt
