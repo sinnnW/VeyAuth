@@ -387,7 +387,7 @@ export class User implements IUser {
         var usr = new User(authed);
 
         try {
-          usr.application = await App.get(data.application_id, App.GET_FLAGS.GET_BY_ID, omit);
+          usr.application = await App.get(data.application_id, omit);
         } catch { }
 
         if (omit)
