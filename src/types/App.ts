@@ -176,6 +176,16 @@ export class App implements IApp {
 		})
 	}
 
+  /**
+   * Delete the current application
+   * @param auth 
+   * @returns 
+   */
+  remove(auth: User): Promise<void> {
+    this.#deleted = true;
+    return App.remove(auth, this);
+  }
+
 	/**
 	* Get the amount of users in the database for the app
 	*/
@@ -190,11 +200,12 @@ export class App implements IApp {
 		})
 	}
 
-	remove(auth: User): Promise<void> {
-		this.#deleted = true;
-    return App.remove(auth, this); 
-	}
-
+  /**
+   * Remove an application
+   * @param {User} auth
+   * @param {App} app
+   * @returns
+   */
   static remove(auth: User, app: App): Promise<void> {
     return new Promise((resolve, reject) => {
 			// Make sure user has permission
@@ -269,23 +280,45 @@ export class App implements IApp {
 		})
 	}
 
-	// This is the function to fetch an application from the database
-	// If the input is a string, try and fetch by name, if its a number,
-	// try and fetch by name, else, reject.
-	// - verlox @ 1/28/22
-	static get(identifier: any, method?: GET_FLAGS, omitOwner: boolean = false): Promise<App> {
-		return new Promise((resolve, reject) => {
-			switch (method) {
-				case GET_FLAGS.GET_BY_NAME:
-					App.getByName(identifier, omitOwner).then(resolve).catch(reject);
-					break;
-				case GET_FLAGS.GET_BY_ID:
-				default: // We stack this so that if they don't supply the method, we just default to this
-					App.getById(+identifier, omitOwner).then(resolve).catch(reject);
-					break;
-			}
+	/**
+   * Get an application by name
+   * @param {string} name Application name
+   * @param {boolean} omitOwner Should we remove the owner from the result
+   * @returns {Promise<App>}
+   */
+	static find(name: string, omitOwner: boolean = false): Promise<App> {
+    return new Promise<App>((resolve, reject) => {
+			Core.db.get('SELECT * FROM applications WHERE name = ?', [name], (err, data) => {
+				if (err)
+					return reject(err)
+				else if (!data)
+					return reject('Unknown application');
+				else
+					this.fill(data, omitOwner).then(resolve); // No catch, because nothing can reject, its just formatting
+			})
 		})
 	}
+
+  /**
+   * Get an application by ID
+   * @param {number} id Application ID
+   * @param {boolean} omitOwner Should we remove the owner from the result
+   * @returns {Promise<App>}
+   */
+  static get(id: number, omitOwner: boolean = false): Promise<App> {
+    return new Promise<App>((resolve, reject) => {
+			// check if application already exists in _db
+			Core.db.get('SELECT * FROM applications WHERE id = ?', [id], (err, data) => {
+				if (err)
+					return reject(err);
+				// if it doesn't exist, throw an error
+				else if (!data)
+					return reject('Unknown application');
+				else
+					this.fill(data, omitOwner).then(resolve); // No catch, because nothing can reject, its just formatting
+			})
+		})
+  }
 
 	private static fill(data: any, omitOwner: boolean): Promise<App> {
 		return new Promise<App>(async (resolve, reject) => {
@@ -306,37 +339,8 @@ export class App implements IApp {
 			app.allowUserSelfDeletion = data.allow_user_self_deletion == 1 ? true : false;
       app.publicSubscriptions = data.subscriptions_public == 1 ? true : false;
       app.multipleSubscriptions = data.subscriptions_multiple == 1 ? true : false;
-
+      
 			return resolve(app);
 		})
 	}
-
-	private static getById(id: number, omitOwner: boolean): Promise<App> {
-		return new Promise<App>((resolve, reject) => {
-			// check if application already exists in _db
-			Core.db.get('SELECT * FROM applications WHERE id = ?', [id], (err, data) => {
-				if (err)
-					return reject(err);
-				// if it doesn't exist, throw an error
-				else if (!data)
-					return reject('Unknown application');
-				else
-					this.fill(data, omitOwner).then(resolve); // No catch, because nothing can reject, its just formatting
-			})
-		})
-	}
-
-	private static getByName(name: string, omitOwner: boolean): Promise<App> {
-		return new Promise<App>((resolve, reject) => {
-			Core.db.get('SELECT * FROM applications WHERE name = ?', [name], (err, data) => {
-				if (err)
-					return reject(err)
-				else if (!data)
-					return reject('Unknown application');
-				else
-					this.fill(data, omitOwner).then(resolve); // No catch, because nothing can reject, its just formatting
-			})
-		})
-	}
-
 }

@@ -1,6 +1,6 @@
 import { IBase } from './IBase';
-import { IVariable } from './IVariable';
 import { User } from '../User';
+import { App } from '../App'
 
 export interface IApp extends IBase {
   name: string;
@@ -8,14 +8,17 @@ export interface IApp extends IBase {
   owner: User;
   allowUserSelfDeletion: boolean;
   publicSubscriptions: boolean;
+  multipleSubscriptions: boolean;
+  format: string;
 
   setDisabled(disabled: boolean): void;
   enable(): void;
   disable(): void;
+  setDisableReason(reason: string): void;
   setName(title: string): void;
   setDescription(description: string): void;
-  getUserCount(): Promise<number>;
+  setOwner(newOwner: User): void;
+  save(auth: User): Promise<App>;
   remove(auth: User): Promise<void>;
-
-  // static create(name: string, auth: User)
+  getUserCount(): Promise<number>;
 }
