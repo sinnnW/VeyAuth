@@ -36,7 +36,7 @@ export class User implements IUser {
 
   // Internal var for previous name, since it has to check on save()
 
-  #prevUsername: string;
+  #prevUsername: string | null;
 
   constructor(authed?: boolean) {
     this.authenticated = authed || false;
@@ -195,6 +195,7 @@ export class User implements IUser {
 
             // Updates were saved
             this.#changes = false;
+            this.#prevUsername = null;
 
             // Return the updated user
             Core.logger.debug(`Saved user information for ${this.format}`);
