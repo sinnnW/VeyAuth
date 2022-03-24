@@ -31,7 +31,7 @@ export class App implements IApp {
   #deleted = false;
 
 	// Internal var for previous name, since it has to check on save()
-	#prevName: string;
+	#prevName: string | null;
 
 	/**
 	* @returns {string} Formatted app name and ID
@@ -166,6 +166,7 @@ export class App implements IApp {
 
 						// Updates were saved
 						this.#changes = false;
+            this.#prevName = null;
 
 						// Return the updated user
 						Core.logger.debug(`Saved application information for ${this.format}`);
