@@ -1,3 +1,5 @@
-export interface IFile {
-  
+import { IBase } from './IBase';
+
+export interface IFile extends IBase {
+
 }
