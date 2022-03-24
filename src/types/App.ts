@@ -37,7 +37,7 @@ export class App implements IApp {
 	* @returns {string} Formatted app name and ID
 	*/
 	get format(): string {
-		return `(${this.name} [AppID ${this.id}])`;
+		return `(${this.name} [AppID ${this.id}] [OwnerID ${this.owner.id}])`;
 	}
 
 	/**
