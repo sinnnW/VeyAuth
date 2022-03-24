@@ -36,6 +36,11 @@ export class File implements IFile {
     this.private = priv;
   }
 
+  setDisableReason(reason: string) {
+    this.#changes = true;
+    this.disableReason = reason;
+  }
+
   save(auth: User): Promise<File> {
     return new Promise<File>((resolve, reject) => {
       if (this.#deleted)
@@ -86,7 +91,7 @@ export class File implements IFile {
             this.#prevName = null;
 
 						// Return the updated user
-						Core.logger.debug(`Saved application information for ${this.format}`);
+						Core.logger.debug(`Saved file information for ${this.format}`);
 						return resolve(this);
 					});
 				});
