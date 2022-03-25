@@ -15,9 +15,7 @@ export class FileManager implements IFileManager {
     this.#app = app;
   }
 
-  static create(auth: User, app: App, user: User | null, fileName: string, data: any, priv: boolean): Promise<File> {
-    return new Promise<File>((resolve, reject) => {
-
-    })
+  create(auth: User, user: User | null, fileName: string, data: any, priv: boolean): Promise<File> {
+    return File.create(auth, auth.application, user || auth, fileName, data);
   }
 }
