@@ -26,6 +26,10 @@ export class File implements IFile {
   }
 
   //#region Modify file properties
+
+  /**
+   * Rename the file itself
+   */
   rename(name: string) {
     if (Utils.hasSpecialChars(name))
       throw new Error('Name cannot contain special characters');
@@ -34,16 +38,50 @@ export class File implements IFile {
     this.name = name;
   }
 
+  /**
+   * Set whether the file can be accessed by everyone or not
+   * @param {boolean} priv
+   */
   setPrivate(priv: boolean) {
     this.#changes = true;
     this.private = priv;
   }
 
+  /**
+   * Set the disabled state
+   * @param {boolean} disabled
+   */
+  setDisabled(disabled: boolean) {
+    this.#changes = true;
+    this.disabled = disabled;
+  }
+
+  /**
+   * Enable access to the file
+   */
+  enable() {
+    this.setDisabled(false);
+  }
+
+  /**
+   * Disable access to the file
+   */
+  disable() {
+    this.setDisabled(true);
+  }
+
+  /**
+   * Set the disable reason
+   */
   setDisableReason(reason: string) {
     this.#changes = true;
     this.disableReason = reason;
   }
 
+  /**
+   * Save any changed items
+   * @param {User} auth
+   */
   save(auth: User): Promise<File> {
     return new Promise<File>((resolve, reject) => {
       if (this.#deleted)
@@ -78,7 +116,7 @@ export class File implements IFile {
 				// Run all the save commands
 				Core.db.serialize(() => {
 					// Set the name
-					Core.db.run('UPDATE files SET name = ? WHERE id = ?', [this.name, this.id]);
+					Core.db.run('UPDATE files SET file_name = ? WHERE id = ?', [this.name, this.id]);
 					Core.logger.debug('Updated name');
 
 					// Update disabled
@@ -104,6 +142,16 @@ export class File implements IFile {
 
   //#endregion
 
+  /**
+   * Create a new file for a user
+   * @param {User} auth 
+   * @param {App} application 
+   * @param {User} user 
+   * @param {string} fileName 
+   * @param {string} data The files data as a string
+   * @param {boolean} priv Private
+   * @returns {Promise<File>} File created
+   */
   static create(auth: User, application: App, user: User | null, fileName: string, data: string, priv: boolean = true): Promise<File> {
     return new Promise<File>((resolve, reject) => {
       if (!auth?.permissions.has(FLAGS.UPLOAD_FILES))
@@ -137,6 +185,12 @@ export class File implements IFile {
     })
   }
 
+  /**
+   * Get a file from ID
+   * @param {User} auth
+   * @param {number} id
+   * @returns {Promise<File>}
+   */
   static get(auth: User | null, id: number): Promise<File> {
     return new Promise<File>((resolve, reject) => {
       Core.db.get('SELECT * FROM files WHERE application_id = ? AND id = ?', [auth?.application.id, id], async (err, data) => {
@@ -153,6 +207,12 @@ export class File implements IFile {
     })
   }
 
+  /**
+   * Get a file from name
+   * @param {User} auth
+   * @param {string} fileName
+   * @returns {Promise<File>}
+   */
   static find(auth: User | null, fileName: string): Promise<File> {
     return new Promise<File>((resolve, reject) => {
       Core.db.get('SELECT * FROM files WHERE application_id = ? AND file_name = ?', [auth?.application.id, fileName], async (err, data) => {
