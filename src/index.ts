@@ -2,6 +2,7 @@ import { Database } from 'sqlite3';
 import { createLogger, Logger, LoggerOptions } from 'winston';
 import { Utils } from './utils/Utils';
 import { config } from 'dotenv';
+import { join } from 'path';
 import fs from 'fs';
 
 export class Core {
@@ -11,7 +12,7 @@ export class Core {
   constructor(loggerOpts: LoggerOptions) {
     Core.logger = createLogger(loggerOpts);
     Core.logger.info('Starting VeyAuth by verlox...');
-    Core.db = new Database(`${__dirname}/auth.db`);
+    Core.db = new Database(`${__dirname}\\auth.db`);
 
     // Load .env vars
     config();
