@@ -4,6 +4,8 @@ import { App } from './App';
 import { Utils } from '../utils/Utils';
 import { FLAGS } from './UserPermissions';
 import { Core } from '..';
+import { join } from 'path';
+import fs from 'fs';
 
 export class File implements IFile {
   id: number;
@@ -23,6 +25,7 @@ export class File implements IFile {
     return `(File ${this.name} [FileID ${this.id}] [AppID ${this.application.id}] [UserID ${this.user.id}])`;
   }
 
+  //#region Modify file properties
   rename(name: string) {
     if (Utils.hasSpecialChars(name))
       throw new Error('Name cannot contain special characters');
@@ -99,12 +102,71 @@ export class File implements IFile {
     })
   }
 
-  static get(id: number) {
+  //#endregion
 
+  static create(auth: User, application: App, user: User | null, fileName: string, data: string, priv: boolean = true): Promise<File> {
+    return new Promise<File>((resolve, reject) => {
+      if (!auth?.permissions.has(FLAGS.UPLOAD_FILES))
+        return reject('Invalid permissions');
+
+      else if (Utils.hasSpecialChars(fileName))
+        return reject('File name cannot contain special characters');
+
+      // Make sure the uploads directory exists
+      if (!fs.existsSync(join(__dirname, 'uploads')))
+        fs.mkdirSync(join(__dirname, 'uploads'));
+      
+      if (!fs.existsSync(join(__dirname, 'uploads', application.id.toString())))
+        fs.mkdirSync(join(__dirname, 'uploads', application.id.toString()));
+
+      fs.writeFileSync(join(__dirname, 'uploads', application.id.toString(), fileName), data);
+
+      Core.db.get('SELECT id FROM files WHERE application_id = ? ORDER BY id DESC', [ application.id ], (err, data) => {
+        if (err)
+          return reject(err);
+
+        let id = data?.id || 0;
+
+        Core.db.run('INSERT INTO files (application_id, user_id, file_name, private) VALUES (?, ?, ?, ?)', [application.id, user?.id, fileName, priv], async err => {
+          if (err)
+            return reject(err);
+          
+          return await File.get(auth, id).catch(reject);
+        })
+      })
+    })
   }
 
-  static find(name: string) {
+  static get(auth: User | null, id: number): Promise<File> {
+    return new Promise<File>((resolve, reject) => {
+      Core.db.get('SELECT * FROM files WHERE application_id = ? AND id = ?', [auth?.application.id, id], async (err, data) => {
+        if (err)
+          return reject(err);
 
+        let file = await File.fill(data);
+
+        if (!auth?.permissions.has(FLAGS.VIEW_PRIVATE_FILES) && file.private)
+          return reject('Invalid permissions');
+
+        return resolve(file);
+      })
+    })
+  }
+
+  static find(auth: User | null, fileName: string): Promise<File> {
+    return new Promise<File>((resolve, reject) => {
+      Core.db.get('SELECT * FROM files WHERE application_id = ? AND file_name = ?', [auth?.application.id, fileName], async (err, data) => {
+        if (err)
+          return reject(err);
+
+        let file = await File.fill(data);
+
+        if (!auth?.permissions.has(FLAGS.VIEW_PRIVATE_FILES) && file.private)
+          return reject('Invalid permissions');
+
+        return resolve(file);
+      })
+    })
   }
 
   private static fill(rawSql: any): Promise<File> {
