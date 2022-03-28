@@ -140,6 +140,27 @@ export class File implements IFile {
     })
   }
 
+
+  /**
+   * Delete the current file
+   * @param auth 
+   */
+  delete(auth: User): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!auth?.permissions.has(FLAGS.DELETE_FILES))
+        return reject('Invalid permissions');
+
+      Core.db.run('DELETE FROM files WHERE application_id = ? AND id = ?', [this.application.id, this.id], err => {
+        if (err)
+          return reject(err);
+
+        fs.unlinkSync(join(__dirname, 'uploads', this.application.id.toString(), this.name));
+
+        resolve();
+      })
+    })
+  }
+
   //#endregion
 
   /**
