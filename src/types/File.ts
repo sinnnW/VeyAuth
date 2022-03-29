@@ -175,7 +175,7 @@ export class File implements IFile {
    */
   static create(auth: User, application: App, user: User | null, fileName: string, data: string, priv: boolean = true): Promise<File> {
     return new Promise<File>((resolve, reject) => {
-      if (!auth?.permissions.has(FLAGS.UPLOAD_FILES))
+      if (!auth?.permissions.has(FLAGS.UPLOAD_FILES) && !application.usersCanCreateFiles && auth.id == user?.id)
         return reject('Invalid permissions');
 
       else if (Utils.hasSpecialChars(fileName))
@@ -194,13 +194,13 @@ export class File implements IFile {
         if (err)
           return reject(err);
 
-        let id = data?.id || 0;
+        let id = (data?.id || 0) + 1; 
 
-        Core.db.run('INSERT INTO files (application_id, user_id, file_name, private) VALUES (?, ?, ?, ?)', [application.id, user?.id, fileName, priv], async err => {
+        Core.db.run('INSERT INTO files (id, application_id, user_id, file_name, private) VALUES (?, ?, ?, ?, ?)', [id, application.id, user?.id, fileName, priv], async err => {
           if (err)
             return reject(err);
           
-          return await File.get(auth, id).catch(reject);
+          File.get(auth, id).then(resolve).catch(reject);
         })
       })
     })
@@ -220,7 +220,7 @@ export class File implements IFile {
 
         let file = await File.fill(data);
 
-        if (!auth?.permissions.has(FLAGS.VIEW_PRIVATE_FILES) && file.private)
+        if (!auth?.permissions.has(FLAGS.VIEW_PRIVATE_FILES) && file.private && !auth?.application.usersCanCreateFiles)
           return reject('Invalid permissions');
 
         return resolve(file);
@@ -261,6 +261,27 @@ export class File implements IFile {
       file.private = rawSql.private == 1 ? true : false;
 
       return resolve(file);
+    })
+  }
+
+  static getAll(auth: User): Promise<File[]> {
+    return new Promise<File[]>((resolve, reject) => {
+      Core.db.all('SELECT * FROM files WHERE application_id = ?', [ auth.application.id ], async (err, data) => {
+        if (err)
+          return reject(err);
+
+        let all: File[] = [];
+        for (let f of data) {
+          // If file is private and the auth user does not have permission, hide it
+          if (f.private && !auth.permissions.has(FLAGS.VIEW_PRIVATE_FILES))
+            continue;
+
+          let file = await File.fill(f);
+          all.push(file);
+        }
+
+        return resolve(all);
+      })
     })
   }
 }
