@@ -4,19 +4,14 @@ import { User } from './User';
 import { Core } from '..';
 
 export class VariableManager implements IVariableManager {
-  all: Variable[];
-  user: Variable[];
-  application: Variable[];
+  all: Variable[] = [];
+  user: Variable[] = [];
+  application: Variable[] = [];
   
   #auth: User;
 
   constructor(auth: User) {
     this.#auth = auth;
-
-    // Instantiate
-    this.all = [];
-    this.user = [];
-    this.application = [];
   }
 
   _getData(): Promise<void> {

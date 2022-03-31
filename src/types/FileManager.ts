@@ -7,8 +7,8 @@ import { File } from './File';
 export class FileManager implements IFileManager {
   #auth: User;
 
-  user: File[];
-  all: File[];
+  user: File[] = [];
+  all: File[] = [];
 
   constructor(auth: User) {
     this.#auth = auth;
