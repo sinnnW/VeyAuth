@@ -250,13 +250,13 @@ export class File implements IFile {
     })
   }
 
-  private static fill(rawSql: any): Promise<File> {
+  private static fill(rawSql: any, user?: User): Promise<File> {
     return new Promise<File>(async (resolve, _) => {
       let file = new File();
 
       file.id = rawSql.id;
       file.application = await App.get(rawSql.application_id);
-      file.user = await User.get(rawSql.user_id);
+      file.user = user || await User.get(rawSql.user_id);
       file.name = rawSql.file_name;
       file.private = rawSql.private == 1 ? true : false;
 
@@ -273,10 +273,10 @@ export class File implements IFile {
         let all: File[] = [];
         for (let f of data) {
           // If file is private and the auth user does not have permission, hide it
-          if (f.private && !auth.permissions.has(FLAGS.VIEW_PRIVATE_FILES))
+          if (f.private && !auth.permissions.has(FLAGS.VIEW_PRIVATE_FILES) && f.user_id != auth.id)
             continue;
 
-          let file = await File.fill(f);
+          let file = await File.fill(f, auth);
           all.push(file);
         }
 
