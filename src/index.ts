@@ -76,3 +76,4 @@ export { User } from './types/User';
 export { Variable } from './types/Variable';
 export { Subscription } from './types/Subscription';
 export { SubscriptionLevel } from './types/SubscriptionLevel';
+export { File } from './types/File';
