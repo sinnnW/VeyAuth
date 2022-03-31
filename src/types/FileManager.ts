@@ -15,7 +15,7 @@ export class FileManager implements IFileManager {
   }
 
   _getData(): Promise<void> {
-    return new Promise<void>(async (resolve, reject) => {
+    return new Promise<void>(async (resolve, _) => {
       let files = await File.getAll(this.#auth); 
 
       this.all = files;
@@ -26,7 +26,7 @@ export class FileManager implements IFileManager {
   }
 
   create(fileName: string, data: any, priv?: boolean): Promise<File> {
-    return new Promise<File>(async (resolve, reject) => {
+    return new Promise<File>(async (resolve, _) => {
       let f = await File.create(this.#auth, this.#auth.application, this.#auth, fileName, data, priv);
       await this._getData();
       return resolve(f);
