@@ -8,11 +8,21 @@ import fs from 'fs';
 export class Core {
   static db: Database;
   static logger: Logger;
+  static dataDir: string;
 
   constructor(loggerOpts: LoggerOptions) {
     Core.logger = createLogger(loggerOpts);
     Core.logger.info('Starting VeyAuth by verlox...');
-    Core.db = new Database(`${__dirname}\\auth.db`);
+    Core.dataDir = join(__dirname, 'data');
+
+    // Create data dir if it does not exist
+    if (!fs.existsSync(Core.dataDir))
+      fs.mkdirSync(Core.dataDir);
+    
+    Core.logger.info(`DATA DIRECTORY: ${Core.dataDir}`);
+
+    // Create / load database
+    Core.db = new Database(join(Core.dataDir, 'auth.db'));
 
     // Load .env vars
     config();
