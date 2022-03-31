@@ -174,7 +174,7 @@ export class Subscription implements ISubscription {
   }
 
   static fill(auth: User, data: any, parent?: User): Promise<Subscription[] | Subscription> {
-    return new Promise<Subscription[] | Subscription>(async (resolve, reject) => {
+    return new Promise<Subscription[] | Subscription>(async (resolve, _) => {
       if (data.length) {
         let subArr = [];
   

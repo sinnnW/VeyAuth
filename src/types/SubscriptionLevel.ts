@@ -259,7 +259,7 @@ export class SubscriptionLevel implements ISubscriptionLevel {
   }
 
   static fill(data: any): Promise<SubscriptionLevel> {
-    return new Promise<SubscriptionLevel>(async (resolve, reject) => {
+    return new Promise<SubscriptionLevel>(async (resolve, _) => {
       var sl = new SubscriptionLevel();
 
       sl.id = data.id;

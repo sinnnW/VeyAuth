@@ -15,7 +15,7 @@ export class VariableManager implements IVariableManager {
   }
 
   _getData(): Promise<void> {
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve, _) => {
       // Remove all items in array
       this.user.splice(0, this.user.length);
       this.application.splice(0, this.application.length);

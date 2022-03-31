@@ -130,7 +130,7 @@ export class Variable implements IVariable {
    * @returns {Promise<Var>} Finished variable
    */
   static fill(rawSql: any, app?: App | null, user?: User | null): Promise<Variable> {
-    return new Promise<Variable>(async (resolve, reject) => {
+    return new Promise<Variable>(async (resolve, _) => {
       var v = new Variable();
 
       // Set the values
