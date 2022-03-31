@@ -18,9 +18,8 @@ export class Utils {
     if (includeSpecial)
       chars += '!@#$%^&*()_+-=[]\\{}|;\':",./<>?`~`';
 
-    for (var x = 0; x < length; x++) {
+    for (var x = 0; x < length; x++)
       s += chars[Math.floor(Math.random() * chars.length)];
-    }
 
     return s;
   }
