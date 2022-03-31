@@ -12,13 +12,14 @@ export class FileManager implements IFileManager {
 
   constructor(auth: User) {
     this.#auth = auth;
+    this._getData();
   }
 
   _getData(): Promise<void> {
     return new Promise<void>(async (resolve, _) => {
       let files = await File.getAll(this.#auth); 
 
-      this.all = files;
+      this.all = files as File[];
       this.user = files.filter(f => f.user != null);
 
       resolve();
