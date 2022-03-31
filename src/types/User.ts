@@ -5,8 +5,11 @@ import { UserPermissionsArray } from './UserPermissionsArray';
 import { App } from './App';
 import { Utils } from '../utils/Utils';
 import { SecurityHelper } from '../utils/SecurityHelper';
-import { SubscriptionManager } from './SubscriptionManager';
 import { Variable } from './Variable';
+
+// Import managers
+import { SubscriptionManager } from './SubscriptionManager';
+import { FileManager } from './FileManager';
 
 enum GET_FLAGS {
   GET_BY_ID,
@@ -27,6 +30,7 @@ export class User implements IUser {
   disableReason?: string = 'No reason';
   application: App;
 
+  files: FileManager;
   subscriptions: SubscriptionManager;
   variables: Variable[];
 
@@ -407,9 +411,7 @@ export class User implements IUser {
 
         // Managers
         usr.subscriptions = new SubscriptionManager(usr);
-
-        // Gotta pull the sub information
-        await usr.subscriptions._getData();
+        usr.files = new FileManager(usr);
 
         // Application specified permissions
         Core.db.all('SELECT * FROM permissions WHERE user_id = ?', [usr.id], (err2, row2: any) => {
