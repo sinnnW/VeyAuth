@@ -26,6 +26,9 @@ export class FileManager implements IFileManager {
   }
 
   create(fileName: string, data: any, priv?: boolean): Promise<File> {
-    return File.create(this.#auth, this.#auth.application, this.#auth, fileName, data, priv);
+    return new Promise<File>(async (resolve, reject) => {
+      await File.create(this.#auth, this.#auth.application, this.#auth, fileName, data, priv);
+      return this._getData();
+    })
   }
 }
