@@ -15,14 +15,24 @@ export class File implements IFile {
   name: string;
   private: boolean;
   application: App;
-  user: User;
+  user?: User;
 
   #changes = false;
   #deleted = false;
   #prevName: string | null;
 
+  /**
+   * Return a formatted info string
+   */
   get format(): string {
-    return `(File ${this.name} [FileID ${this.id}] [AppID ${this.application.id}] [UserID ${this.user.id}])`;
+    return `(File ${this.name} [FileID ${this.id}] [AppID ${this.application.id}] [UserID ${this.user?.id}])`;
+  }
+
+  /**
+   * Get the file's data
+   */
+  get data(): string {
+    return fs.readFileSync(join(Core.dataDir, 'uploads', this.application.id.toString(), this.name), 'utf8');
   }
 
   //#region Modify file properties
@@ -154,7 +164,7 @@ export class File implements IFile {
         if (err)
           return reject(err);
 
-        fs.unlinkSync(join(__dirname, 'uploads', this.application.id.toString(), this.name));
+        fs.unlinkSync(join(Core.dataDir, 'uploads', this.application.id.toString(), this.name));
 
         resolve();
       })
@@ -182,13 +192,13 @@ export class File implements IFile {
         return reject('File name cannot contain special characters');
 
       // Make sure the uploads directory exists
-      if (!fs.existsSync(join(__dirname, 'uploads')))
-        fs.mkdirSync(join(__dirname, 'uploads'));
+      if (!fs.existsSync(join(Core.dataDir, 'uploads')))
+        fs.mkdirSync(join(Core.dataDir, 'uploads'));
       
-      if (!fs.existsSync(join(__dirname, 'uploads', application.id.toString())))
-        fs.mkdirSync(join(__dirname, 'uploads', application.id.toString()));
+      if (!fs.existsSync(join(Core.dataDir, 'uploads', application.id.toString())))
+        fs.mkdirSync(join(Core.dataDir, 'uploads', application.id.toString()));
 
-      fs.writeFileSync(join(__dirname, 'uploads', application.id.toString(), fileName), data);
+      fs.writeFileSync(join(Core.dataDir, 'uploads', application.id.toString(), fileName), data);
 
       Core.db.get('SELECT id FROM files WHERE application_id = ? ORDER BY id DESC', [ application.id ], (err, data) => {
         if (err)
