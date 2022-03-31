@@ -20,7 +20,7 @@ I needed to recode my legacy authentication system I had originally wrote for a 
 Pull reqeusts will be reviewed and are welcome
 
 ## Todo:
-* Make `get` get by ID, `find`, by name
+* Create an invite system + manager
 
 ## In progress:
-* Statistics system
+* File manager
