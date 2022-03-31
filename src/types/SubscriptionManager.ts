@@ -17,7 +17,6 @@ export class SubscriptionManager implements ISubscriptionManager {
   constructor(auth: User) {
     // Set the parent
     this.#auth = auth;
-    this._getData();
   }
 
   _getData(): Promise<void> {

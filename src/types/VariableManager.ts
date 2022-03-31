@@ -1,7 +1,6 @@
 import { IVariableManager } from './interfaces/IVariableManager';
 import { Variable } from './Variable';
 import { User } from './User';
-import { Core } from '..';
 
 export class VariableManager implements IVariableManager {
   all: Variable[] = [];
@@ -35,5 +34,9 @@ export class VariableManager implements IVariableManager {
 
       return resolve();
     })
+  }
+
+  create(key: string,  value: string, priv: boolean = false): Promise<Variable> {
+    return Variable.create(this.#auth, this.#auth.application, this.#auth, key, value, priv);
   }
 }

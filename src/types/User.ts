@@ -5,7 +5,7 @@ import { UserPermissionsArray } from './UserPermissionsArray';
 import { App } from './App';
 import { Utils } from '../utils/Utils';
 import { SecurityHelper } from '../utils/SecurityHelper';
-import { Variable } from './Variable';
+import { VariableManager } from './VariableManager';
 
 // Import managers
 import { SubscriptionManager } from './SubscriptionManager';
@@ -32,7 +32,7 @@ export class User implements IUser {
 
   files: FileManager;
   subscriptions: SubscriptionManager;
-  variables: Variable[];
+  variables: VariableManager;
 
   // Internal var to detect if there is changes for saving
   #changes = false;
@@ -407,11 +407,17 @@ export class User implements IUser {
         usr.password = data.password;
         usr.disabled = data.disabled == 1 ? true : false;
         usr.disableReason = data.disable_reason;
-        usr.variables = (await Variable.getAll(usr)).filter(itm => itm.user) as Variable[];
+        // usr.variables = (await Variable.getAll(usr)).filter(itm => itm.user) as Variable[];
 
         // Managers
         usr.subscriptions = new SubscriptionManager(usr);
         usr.files = new FileManager(usr);
+        usr.variables = new VariableManager(usr);
+
+        // Pull the data
+        await usr.subscriptions._getData();
+        await usr.files._getData();
+        await usr.variables._getData();
 
         // Application specified permissions
         Core.db.all('SELECT * FROM permissions WHERE user_id = ?', [usr.id], (err2, row2: any) => {
