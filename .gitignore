@@ -10,3 +10,4 @@ test.js
 statistics.js
 *.env
 *.test.txt
+docs/
