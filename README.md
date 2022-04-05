@@ -21,6 +21,8 @@ Pull reqeusts will be reviewed and are welcome
 
 ## Todo:
 * Create an invite system + manager
+* Add global methods:
+  * Recalculate all tokens (good for if session secret changes/pass salt)
 
 ## In progress:
-* File manager
+* Updating JSDoc
