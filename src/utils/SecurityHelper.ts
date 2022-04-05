@@ -1,6 +1,6 @@
 import { User } from '../types/User';
 import { encode, decode, TAlgorithm } from 'jwt-simple';
-import { createHmac } from 'crypto';
+import { hashSync } from 'bcrypt';
 
 const alg: TAlgorithm = 'HS512';
 export class SecurityHelper {
@@ -29,6 +29,6 @@ export class SecurityHelper {
    * @returns {string} Hashed and salted string
    */
   static hashString(input: string): string {
-    return createHmac('sha256', process.env.PASSWORD_SALT || '').update(input).digest('hex');
+    return hashSync(input, process.env.PASSWORD_SALT || '');
   }
 }
