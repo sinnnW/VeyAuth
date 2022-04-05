@@ -12,7 +12,7 @@ export class SubscriptionManager implements ISubscriptionManager {
 
   /**
    * Setup the subscription manager
-   * @param auth 
+   * @param {User} auth Authorization 
    */
   constructor(auth: User) {
     // Set the parent

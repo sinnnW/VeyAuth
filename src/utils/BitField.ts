@@ -12,6 +12,11 @@ export class BitField implements IBitField {
     this.overrides = overrides;
   }
 
+  /**
+   * Check if a bitfield has a bit
+   * @param {number} bit Bit
+   * @returns {boolean} Has bit
+   */
   has(bit: number): boolean {
     if ((this.field & bit) === bit)
       return true;

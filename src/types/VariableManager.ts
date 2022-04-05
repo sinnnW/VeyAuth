@@ -20,7 +20,7 @@ export class VariableManager implements IVariableManager {
       this.application.splice(0, this.application.length);
 
       // Get all
-      let vars = await Variable.getAll(this.#auth);
+      let vars = await Variable.all(this.#auth);
 
       // Iterate throught and populate arrays
       for (var x = 0;x < vars.length;x++) {
@@ -36,6 +36,13 @@ export class VariableManager implements IVariableManager {
     })
   }
 
+  /**
+   * Create a new variable
+   * @param {string} key Key
+   * @param {string} value Value
+   * @param {boolean} priv Priavate
+   * @returns {Promise<Variable>} Created variable
+   */
   create(key: string,  value: string, priv: boolean = false): Promise<Variable> {
     return Variable.create(this.#auth, this.#auth.application, this.#auth, key, value, priv);
   }

@@ -19,7 +19,7 @@ export class FileManager implements IFileManager {
    */
   _getData(): Promise<void> {
     return new Promise<void>(async (resolve, _) => {
-      let files = await File.getAll(this.#auth); 
+      let files = await File.all(this.#auth); 
       this.all = files;
       resolve();
     })
@@ -27,9 +27,9 @@ export class FileManager implements IFileManager {
 
   /**
    * Create a new file
-   * @param {string} fileName
-   * @param {string} data
-   * @param {boolean} priv
+   * @param {string} fileName File name
+   * @param {string} data File data
+   * @param {boolean} priv Private
    * @returns {Promise<File>} File created
    */
   create(fileName: string, data: string, priv?: boolean): Promise<File> {

@@ -47,6 +47,7 @@ export class User implements IUser {
   }
 
   /**
+   * Formatted user information
    * @returns {string} Formatted username, ID, and app ID
    */
   get format(): string {
@@ -55,7 +56,8 @@ export class User implements IUser {
 
   /**
    * Recalculate the users token, good for when you change SESSION_SECRET
-   * @param auth
+   * @param {User} auth Authorization
+   * @returns {Promise<string>} Recalculated token
    */
   recalculateToken(auth: User): Promise<string> {
     return new Promise<string>((resolve, reject) => {
@@ -76,7 +78,7 @@ export class User implements IUser {
 
   /**
    * Set the disabled state
-   * @param disabled true = disabled, false = enabled
+   * @param {boolean} disabled Disabled
    */
   setDisabled(disabled: boolean) {
     this.#changes = true;
@@ -99,7 +101,7 @@ export class User implements IUser {
 
   /**
    * Set the disable reason
-   * @param reason Reason for being disabled
+   * @param {string} reason Disable reason
    */
   setDisableReason(reason: string) {
     this.#changes = true;
@@ -108,7 +110,7 @@ export class User implements IUser {
 
   /**
    * Set the username
-   * @param username The new username
+   * @param {string} username Username
    */
   setUsername(username: string) {
     if (Utils.hasSpecialChars(username))
@@ -121,7 +123,7 @@ export class User implements IUser {
 
   /**
    * Set the password
-   * @param password The new (unhashed) password
+   * @param {string} password The new (unhashed) password
    */
   setPassword(password: string) {
     this.#changes = true;
@@ -130,7 +132,7 @@ export class User implements IUser {
 
   /**
    * Set the HardWare ID
-   * @param hwid New HWID
+   * @param {string} hwid New HWID
    */
   setHwid(hwid: string) {
     this.#changes = true;
@@ -139,6 +141,7 @@ export class User implements IUser {
 
   /**
    * Saves the user
+   * @param {User} auth Authorization
    * @returns {Promise<User>} Updated user
    */
   save(auth: User): Promise<User> {
@@ -212,7 +215,7 @@ export class User implements IUser {
 
   /**
    * This will delete the current user
-   * @param User User with permission to delete their profile
+   * @param {User} auth Authorization
    */
   remove(auth: User): Promise<void> {
     this.#deleted = true;
@@ -238,11 +241,11 @@ export class User implements IUser {
 
   /**
    * Create a user in the database
-   * @param auth Coreenticated user
-   * @param app Application it will be under
-   * @param username
-   * @param password
-   * @param permissions Permissions they will have
+   * @param {User} auth Authorization Coreenticated user
+   * @param {App} app Application it will be under
+   * @param {string} username Username
+   * @param {string} password Password (unhashed)
+   * @param {UserPermissionsArray} permissions Permissions they will have
    * @returns {Promise<User>} User created
    */
   static create(auth: User, app: App, username: string, password: string, permissions?: UserPermissionsArray): Promise<User> {
@@ -321,11 +324,11 @@ export class User implements IUser {
 
   /**
    * Verify a username and password, supply token as username, and null as password to try token
-   * @param username 
-   * @param password 
-   * @returns {Promise<User>} User authed
+   * @param {string} usernameOrToken Username or token
+   * @param {string} password Password
+   * @returns {Promise<User>} User authenticated
    */
-  static verify(username: string, password?: string): Promise<User> {
+  static verify(usernameOrToken: string, password?: string): Promise<User> {
     return new Promise<User>((resolve, reject) => {
       let af = (user: User) => {
         if (user.application.disabled)
@@ -336,32 +339,20 @@ export class User implements IUser {
           return resolve(user);
       }
 
-      if (!password) {
-        // Base user information
-        Core.db.get('SELECT * FROM users WHERE token = ?', [username], async (err, data) => {
-          if (err)
-            return reject(err);
-          else if (!data) // No data, unknown token
-            return reject('Invalid auth');
-          else
-            af(await this.fill(data, true));
-        });
-      } else {
-        Core.db.get('SELECT * FROM users WHERE username = ? AND password = ?', [username, SecurityHelper.hashString(password)], async (err, data) => {
-          if (err)
-            return reject(err);
-          else if (!data)
-            return reject('Invalid auth');
-          else
-            af(await this.fill(data, true));
-        })
-      }
+      Core.db.get('SELECT * FROM users WHERE (username = ? AND password = ?) OR token = ?', [usernameOrToken, SecurityHelper.hashString(password || ''), usernameOrToken], async (err, data) => {
+        if (err)
+          return reject(err);
+        else if (!data)
+          return reject('Invalid authentication');
+        else
+          af(await this.fill(data, true));
+      })
     })
   }
 
   /**
-   * Gets a user by token or ID
-   * @param identifier Get by token or ID
+   * Gets a user by ID
+   * @param {number} id ID
    * @returns {Promise<User>} User found
    */
   static get(id: number): Promise<User> {
@@ -379,7 +370,12 @@ export class User implements IUser {
     })
   }
 
-  // This function will fill out the data returned
+  /**
+   * Fill in a User class from raw SQL data
+   * @param {any} data Raw SQL data
+   * @param {boolean} authed Authenticated
+   * @returns {Promise<User>} User class filled in with data
+   */
   private static fill(data: any, authed: boolean = false): Promise<User> {
     return new Promise((resolve, reject) => {
       var omit = false;
@@ -407,7 +403,7 @@ export class User implements IUser {
         usr.password = data.password;
         usr.disabled = data.disabled == 1 ? true : false;
         usr.disableReason = data.disable_reason;
-        // usr.variables = (await Variable.getAll(usr)).filter(itm => itm.user) as Variable[];
+        // usr.variables = (await Variable.all(usr)).filter(itm => itm.user) as Variable[];
 
         // Managers
         usr.subscriptions = new SubscriptionManager(usr);

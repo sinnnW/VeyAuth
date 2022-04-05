@@ -21,10 +21,18 @@ export class SubscriptionLevel implements ISubscriptionLevel {
   #deleted = false;
   #prevName: string;
 
+  /**
+   * Get a formatted string with information on a subscription level
+   * @returns {string} Formatted data
+   */
   get format(): string {
     return `(${this.name} [SubscriptionLevelID ${this.id}])`;
   }
 
+  /**
+   * Set the name
+   * @param {string} name Name
+   */
   setName(name: string) {
     if (Utils.hasSpecialChars(name))
       throw new Error('Name cannot contain special characters');
@@ -34,24 +42,42 @@ export class SubscriptionLevel implements ISubscriptionLevel {
     this.name = name;
   }
 
+  /**
+   * Set the description
+   * @param {string} desc Description
+   */
   setDescription(desc: string) {
     this.#changes = true;
     this.description = desc;
   }
 
+  /**
+   * Set the disabled state
+   * @param {boolean} disabled Disabled
+   */
   setDisabled(disabled: boolean) {
     this.#changes = true;
     this.disabled = disabled;
   }
 
+  /**
+   * Enable
+   */
   enable() {
     this.setDisabled(false);
   }
 
+  /**
+   * Disable
+   */
   disable() {
     this.setDisabled(true);
   }
 
+  /**
+   * Set disable reason
+   * @param {string} reason Reason
+   */
   setDisableReason(reason: string) {
     this.#changes = true;
     this.disableReason = reason;
@@ -59,7 +85,8 @@ export class SubscriptionLevel implements ISubscriptionLevel {
 
   /**
    * Save the changed items
-   * @param {User} auth
+   * @param {User} auth Authorization
+   * @returns {Promise<SubscriptionLevel>} Updated saved data
    */
   save(auth: User): Promise<SubscriptionLevel> {
     return new Promise<SubscriptionLevel>((resolve, reject) => {
@@ -124,7 +151,7 @@ export class SubscriptionLevel implements ISubscriptionLevel {
 
   /**
    * Remove the current subscription level
-   * @param {User} auth
+   * @param {User} auth Authorization
    * @returns {Promise<void>}
    */
   remove(auth: User): Promise<void> {
@@ -134,7 +161,7 @@ export class SubscriptionLevel implements ISubscriptionLevel {
 
   /**
    * Remove a subscription level
-   * @param {User} auth
+   * @param {User} auth Authorization
    * @param {SubscriptionLevel} subscriptionLevel 
    * @returns {Promise<void>}
    */
@@ -155,11 +182,11 @@ export class SubscriptionLevel implements ISubscriptionLevel {
 
   /**
    * Create a new subscription level
-   * @param {User} auth
-   * @param {App} app
-   * @param {string} name Subscription level name 
-   * @param {string} description Subscription level description 
-   * @returns {Promise<SubscriptionLevel>} The created subscription level
+   * @param {User} auth Authorization
+   * @param {App} app Application
+   * @param {string} name Name 
+   * @param {string} description Description
+   * @returns {Promise<SubscriptionLevel>} Created subscription level
    */
   static create(auth: User, app: App, name: string, description?: string): Promise<SubscriptionLevel> {
     return new Promise<SubscriptionLevel>((resolve, reject) => {
@@ -187,8 +214,8 @@ export class SubscriptionLevel implements ISubscriptionLevel {
 
   /**
    * Get a subscription level from ID
-   * @param {User} auth
-   * @param {App} app
+   * @param {User|null} auth Authorization, can be null if subscriptions are public
+   * @param {App} app Application
    * @param {number} id Subscription level ID
    * @returns {Promise<SubscriptionLevel>} Subscription level found
    */
@@ -216,9 +243,9 @@ export class SubscriptionLevel implements ISubscriptionLevel {
 
   /**
    * This will find a subscription level with a certain name
-   * @param {User} auth 
-   * @param {App} app 
-   * @param {string} name 
+   * @param {User} auth Authorization
+   * @param {App} app Application
+   * @param {string} name Name
    * @param {boolean} checkSimilar Should it check for similar names?
    * @returns {Promise<SubscriptionLevel>} THe found subscription level
    */
@@ -258,6 +285,11 @@ export class SubscriptionLevel implements ISubscriptionLevel {
     })
   }
 
+  /**
+   * Fill in a SubscriptionLevel class from raw SQL data
+   * @param {any} data Raw SQL data
+   * @returns {Promise<SubscriptionLevel>} SubscriptionLevel class with filled in data
+   */
   static fill(data: any): Promise<SubscriptionLevel> {
     return new Promise<SubscriptionLevel>(async (resolve, _) => {
       var sl = new SubscriptionLevel();

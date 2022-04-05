@@ -35,15 +35,16 @@ export class App implements IApp {
 	#prevName: string | null;
 
 	/**
-	* @returns {string} Formatted app name and ID
-	*/
+   * Formatted application information
+   * @returns {string} Formatted information
+   */
 	get format(): string {
 		return `(${this.name} [AppID ${this.id}] [OwnerID ${this.owner.id}])`;
 	}
 
 	/**
 	* Enable or disable an application
-	* @param disabled true = disabled, false = enabled
+	* @param {boolean} disabled true = disabled, false = enabled
 	*/
 	setDisabled(disabled: boolean) {
 		this.#changes = true;
@@ -66,7 +67,7 @@ export class App implements IApp {
 
 	/**
 	* Set the reason why an application is disabled
-	* @param disableReason Reason
+	* @param {string} disableReason Reason
 	*/
 	setDisableReason(disableReason: string) {
 		this.#changes = true;
@@ -75,7 +76,7 @@ export class App implements IApp {
 
 	/**
 	* Set app name
-	* @param name 
+	* @param {string} name New name 
 	*/
 	setName(name: string) {
 		if (Utils.hasSpecialChars(name))
@@ -88,7 +89,7 @@ export class App implements IApp {
 
 	/**
 	* Set the description for the app
-	* @param description 
+	* @param {string} description New application description 
 	*/
 	setDescription(description: string) {
 		this.#changes = true;
@@ -106,7 +107,7 @@ export class App implements IApp {
 
 	/**
 	* Save changes to the app
-	* @params auth
+	* @param {User} auth Authorization 
 	* @returns {Promise<App>} App changes
 	*/
 	save(auth: User): Promise<App> {
@@ -180,8 +181,8 @@ export class App implements IApp {
 
   /**
    * Delete the current application
-   * @param auth 
-   * @returns 
+   * @param {User} auth Authorization
+   * @returns {Promise<void>}
    */
   remove(auth: User): Promise<void> {
     this.#deleted = true;
@@ -204,9 +205,9 @@ export class App implements IApp {
 
   /**
    * Remove an application
-   * @param {User} auth
-   * @param {App} app
-   * @returns
+   * @param {User} auth Authorization
+   * @param {App} app Application
+   * @returns {Promise<void>}
    */
   static remove(auth: User, app: App): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -230,12 +231,12 @@ export class App implements IApp {
 
 	/**
 	* Create an application
-	* @param auth Core user with permissions to create an application
-	* @param name Name of app
-	* @param description App description
-	* @param subscriptionsEnabled 
-	* @param inviteRequired 
-	* @param hwidLocked 
+	* @param {User} auth Authorization Core user with permissions to create an application
+	* @param {string} name Name of app
+	* @param {string} description App description
+	* @param {boolean} subscriptionsEnabled Are subscriptions enabled
+	* @param {boolean} inviteRequired Do new users need an invite
+	* @param {boolean} hwidLocked Are user logins HWID locked
 	* @returns {Promise<App>} App created
 	*/
 	static create(auth: User, name: string, description?: string, subscriptionsEnabled: boolean = false, inviteRequired: boolean = false, hwidLocked: boolean = false): Promise<App> {
@@ -286,7 +287,7 @@ export class App implements IApp {
    * Get an application by name
    * @param {string} name Application name
    * @param {boolean} omitOwner Should we remove the owner from the result
-   * @returns {Promise<App>}
+   * @returns {Promise<App>} Application found
    */
 	static find(name: string, omitOwner: boolean = false): Promise<App> {
     return new Promise<App>((resolve, reject) => {
@@ -305,7 +306,7 @@ export class App implements IApp {
    * Get an application by ID
    * @param {number} id Application ID
    * @param {boolean} omitOwner Should we remove the owner from the result
-   * @returns {Promise<App>}
+   * @returns {Promise<App>} Application found
    */
   static get(id: number, omitOwner: boolean = false): Promise<App> {
     return new Promise<App>((resolve, reject) => {
@@ -322,6 +323,12 @@ export class App implements IApp {
 		})
   }
 
+  /**
+   * Fill in an application class from raw SQL data
+   * @param {any} data Raw SQL output
+   * @param {boolean} omitOwner Do not add owner to the class (can prevent infinite loops)
+   * @returns {Promise<App>} Application that was filled in
+   */
 	private static fill(data: any, omitOwner: boolean): Promise<App> {
 		return new Promise<App>(async (resolve, _) => {
 			var app = new App();

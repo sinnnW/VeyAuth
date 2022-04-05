@@ -14,8 +14,8 @@ export class UserPermissionsArray {
 
   /**
    * 
-   * @param permissions Permissions as a number
-   * @param parentUser The parent
+   * @param {number} permissions Permissions as a number
+   * @param {User} parentUser The parent
    */
   constructor(permissions: number, parentUser?: User) {
     this.permissions[-1] = new UserPermissions(permissions ?? FLAGS.USER);
@@ -24,9 +24,9 @@ export class UserPermissionsArray {
 
   /**
    * Checks if a user has permission to perform an action on a certain application
-   * @param bit Permission bit as a number
-   * @param appId Application ID
-   * @returns Permission status
+   * @param {number} bit Permission bit as a number
+   * @param {number} appId Application ID
+   * @returns {boolean} Permission status
    */
   has(bit: number, appId?: number): boolean {
     // Make sure that parentUser is defined, and that the user is authenticated
@@ -49,8 +49,8 @@ export class UserPermissionsArray {
 
   /**
    * Get the permissions as a number for an app
-   * @param appId Application ID
-   * @returns Permissions for the app
+   * @param {number} appId Application ID
+   * @returns {UserPermissions} Permissions for the app
    */
   get(appId: number = -1): UserPermissions {
     // Use the current permissions, if they are not there, that means that the permissions var is up to date
@@ -59,11 +59,11 @@ export class UserPermissionsArray {
 
   /**
    * Set permissions for a user for a certain app
-   * @param appId Application ID
-   * @param permissions Permissions flag
+   * @param {number} appId Application ID
+   * @param {number} permissions Permissions flag
    * @returns {UserPermissionsArray}
    */
-  set(appId: number, permissions: number) {
+  set(appId: number, permissions: number): UserPermissionsArray {
     if (this.permissions[appId])
       this.permissions[appId].field = permissions;
     else
@@ -81,7 +81,7 @@ export class UserPermissionsArray {
 
   /**
    * Save a user's permissions to the database
-   * @param auth
+   * @param {User} auth Authorization
    * @returns {Promise<UserPermissionsArray>} Updated permissions
    */
   save(auth: User): Promise<UserPermissionsArray> {
@@ -116,10 +116,10 @@ export class UserPermissionsArray {
 
   /**
    * Set the new parent
-   * @param parent
-   * @returns {UserPermissionsArray}
+   * @param {User} parent New parent
+   * @returns {UserPermissionsArray} New permissions parent
    */
-  setParent(parent: User) {
+  setParent(parent: User): UserPermissionsArray {
     this.#parentUser = parent;
     return this;
   }

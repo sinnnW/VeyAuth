@@ -20,7 +20,7 @@ export class Variable implements IVariable {
 
   /**
    * Update a var to a new key
-   * @param key New key
+   * @param {string} key New key
    */
   setKey(key: string) {
     if (Utils.hasSpecialChars(key))
@@ -33,7 +33,7 @@ export class Variable implements IVariable {
 
   /**
    * Update a vars value
-   * @param value New value
+   * @param {string} value New value
    */
   setValue(value: string) {
     this.#changes = true;
@@ -42,7 +42,7 @@ export class Variable implements IVariable {
 
   /**
    * Change whether the var is private or not
-   * @param priv {boolean}
+   * @param {boolean} priv
    */
   setPrivate(priv: boolean) {
     this.#changes = true;
@@ -51,7 +51,7 @@ export class Variable implements IVariable {
 
   /**
    * Save the pending changes
-   * @param auth 
+   * @param {User} auth Authorization 
    * @returns {Promise<Var>} Updated var
    */
   save(auth: User): Promise<Variable> {
@@ -110,7 +110,7 @@ export class Variable implements IVariable {
 
   /**
    * Delete the variable
-   * @param auth 
+   * @param {User} auth Authorization 
    * @returns {Promise<void>}
    */
   delete(auth: User): Promise<void> {
@@ -126,7 +126,7 @@ export class Variable implements IVariable {
 
   /**
    * Create a new variable from a SQLite return
-   * @param rawSql 
+   * @param {any} rawSql Raw SQL data
    * @returns {Promise<Var>} Finished variable
    */
   static fill(rawSql: any, app?: App | null, user?: User | null): Promise<Variable> {
@@ -154,10 +154,10 @@ export class Variable implements IVariable {
 
   /**
    * Get a variable for an application/user
-   * @param auth 
+   * @param {User} auth Authorization 
    * @param app Application it is under
    * @param user User it is under
-   * @param key 
+   * @param key Key
    * @returns {Promise<Var>} Variable found
    */
   static get(auth: User | null, app: App, user: User | null, key: string): Promise<Variable> {
@@ -182,7 +182,12 @@ export class Variable implements IVariable {
     })
   }
 
-  static getAll(auth: User): Promise<Variable[]> {
+  /**
+   * Get all the variables for a user
+   * @param {User} auth Authorization
+   * @returns {Promise<Variable[]>} All variables for authorized user
+   */
+  static all(auth: User): Promise<Variable[]> {
     return new Promise<Variable[]>((resolve, reject) => {
       Core.db.all('SELECT * FROM variables WHERE application_id = ?', [ auth.application.id ], async (err, data: any) => {
         if (err)
@@ -203,12 +208,12 @@ export class Variable implements IVariable {
 
   /**
    * Create a new variable for an application/user
-   * @param auth 
-   * @param app Application to create under
-   * @param user User to create under, null for it to be application-wide
-   * @param key 
-   * @param value 
-   * @param priv Private
+   * @param {User} auth Authorization 
+   * @param {App} app Application to create under
+   * @param {User} user User to create under, null for it to be application-wide
+   * @param {string} key Key
+   * @param {string} value Value
+   * @param {boolean} priv Private
    * @returns {Promise<Var>} The created variable
    */
   static create(auth: User, app: App, user: User | null, key: string, value: string, priv: boolean = true): Promise<Variable> {

@@ -28,7 +28,7 @@ export class Subscription implements ISubscription {
 
   /**
    * Set the new date that the subscription expires at
-   * @param newDate 
+   * @param newDate New date to expire at
    */
   setExpiresAt(newDate: Date) {
     this.#changes = true;
@@ -37,7 +37,7 @@ export class Subscription implements ISubscription {
 
   /**
    * Save any staged changes
-   * @param auth 
+   * @param {User} auth Authorization 
    * @returns {Promise<Subscription>} Updated subscription
    */
   save(auth: User): Promise<Subscription> {
@@ -73,7 +73,7 @@ export class Subscription implements ISubscription {
 
   /**
    * Remove the current subscription
-   * @param {User} auth 
+   * @param {User} auth Authorization
    * @returns {Promise<void>}
    */
   async remove(auth: User): Promise<void> {
@@ -83,9 +83,9 @@ export class Subscription implements ISubscription {
 
   /**
    * Remove an existing subscription
-   * @param {User} auth 
-   * @param {App} app 
-   * @param {Subscription} subscription
+   * @param {User} auth Authorization
+   * @param {App} app Application
+   * @param {Subscription} subscription Subscription
    * @returns {Promise<void>}
    */
   static remove(auth: User, subscription: Subscription): Promise<void> {
@@ -106,13 +106,13 @@ export class Subscription implements ISubscription {
 
   /**
    * Create a new subscription for a user
-   * @param {User} auth 
-   * @param {App} app 
-   * @param {User} user 
-   * @param {SubscriptionLevel} subscriptionLevel 
-   * @param {Date} expiresAt 
+   * @param {User} auth Authorization
+   * @param {App} app Application
+   * @param {User} user User
+   * @param {SubscriptionLevel} subscriptionLevel Subscription level
+   * @param {Date} expiresAt Expires at
    * @param {boolean} overwrite Should we overwrite a previous subscription on the user (if it exists, and application only allows one subscription at a time)
-   * @returns {Promise<Subscription>}
+   * @returns {Promise<Subscription>} Created subscription
    */
   static create(auth: User, app: App, user: User, subscriptionLevel: SubscriptionLevel, expiresAt: Date, overwrite?: boolean): Promise<Subscription> {
     return new Promise<Subscription>(async (resolve, reject) => {
@@ -148,6 +148,14 @@ export class Subscription implements ISubscription {
     })
   }
 
+  /**
+   * Get a subscription by ID
+   * @param {User|null} auth Authorization, not required if subscriptions are set to public
+   * @param {App} app Application
+   * @param {User} user User
+   * @param {number} id ID of the subscription
+   * @returns {Promise<Subscription[]|Subscription>} Subscription(s) found
+   */
   static get(auth: User | null, app: App, user: User, id?: number): Promise<Subscription[] | Subscription> {
     return new Promise<Subscription[] | Subscription>((resolve, reject) => {
       if (auth?.id != user?.id && !auth?.permissions.has(FLAGS.VIEW_SUBSCRIPTION))
@@ -173,6 +181,13 @@ export class Subscription implements ISubscription {
     })
   }
 
+  /**
+   * Fill in a Subscription class from raw SQL data
+   * @param {User} auth Authorization
+   * @param {any} data Raw SQL data
+   * @param {User} parent User the file belongs to override
+   * @returns {Promise<Subscription[]|Subscription>}
+   */
   static fill(auth: User, data: any, parent?: User): Promise<Subscription[] | Subscription> {
     return new Promise<Subscription[] | Subscription>(async (resolve, _) => {
       if (data.length) {

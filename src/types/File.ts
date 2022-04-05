@@ -23,6 +23,7 @@ export class File implements IFile {
 
   /**
    * Return a formatted info string
+   * @returns {string} Formatted information
    */
   get format(): string {
     return `(File ${this.name} [FileID ${this.id}] [AppID ${this.application.id}] [UserID ${this.user?.id}])`;
@@ -30,6 +31,7 @@ export class File implements IFile {
 
   /**
    * Get the file's data
+   * @returns {string} File data read
    */
   get data(): string {
     return fs.readFileSync(join(Core.dataDir, 'uploads', this.application.id.toString(), this.name), 'utf8');
@@ -39,6 +41,7 @@ export class File implements IFile {
 
   /**
    * Rename the file itself
+   * @param {string} name New name
    */
   rename(name: string) {
     if (Utils.hasSpecialChars(name))
@@ -50,7 +53,7 @@ export class File implements IFile {
 
   /**
    * Set whether the file can be accessed by everyone or not
-   * @param {boolean} priv
+   * @param {boolean} priv Private
    */
   setPrivate(priv: boolean) {
     this.#changes = true;
@@ -59,7 +62,7 @@ export class File implements IFile {
 
   /**
    * Set the disabled state
-   * @param {boolean} disabled
+   * @param {boolean} disabled Set application disabled state
    */
   setDisabled(disabled: boolean) {
     this.#changes = true;
@@ -82,6 +85,7 @@ export class File implements IFile {
 
   /**
    * Set the disable reason
+   * @param {string} reason Set disable reason
    */
   setDisableReason(reason: string) {
     this.#changes = true;
@@ -91,6 +95,7 @@ export class File implements IFile {
   /**
    * Save any changed items
    * @param {User} auth
+   * @return {Promise<File>} Updated file information
    */
   save(auth: User): Promise<File> {
     return new Promise<File>((resolve, reject) => {
@@ -153,7 +158,8 @@ export class File implements IFile {
 
   /**
    * Delete the current file
-   * @param auth 
+   * @param {User} auth Authorization 
+   * @returns {Promise<void>} File deletion
    */
   delete(auth: User): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -175,11 +181,11 @@ export class File implements IFile {
 
   /**
    * Create a new file for a user
-   * @param {User} auth 
-   * @param {App} application 
-   * @param {User} user 
-   * @param {string} fileName 
-   * @param {string} data The files data as a string
+   * @param {User} auth Authorization
+   * @param {App} application Application
+   * @param {User} user User
+   * @param {string} fileName File name
+   * @param {string} data The file's data
    * @param {boolean} priv Private
    * @returns {Promise<File>} File created
    */
@@ -218,9 +224,9 @@ export class File implements IFile {
 
   /**
    * Get a file from ID
-   * @param {User} auth
-   * @param {number} id
-   * @returns {Promise<File>}
+   * @param {User} auth Authorization
+   * @param {number} id File ID
+   * @returns {Promise<File>} File found
    */
   static get(auth: User | null, id: number): Promise<File> {
     return new Promise<File>((resolve, reject) => {
@@ -240,9 +246,9 @@ export class File implements IFile {
 
   /**
    * Get a file from name
-   * @param {User} auth
-   * @param {string} fileName
-   * @returns {Promise<File>}
+   * @param {User} auth Authorization
+   * @param {string} fileName File name
+   * @returns {Promise<File>} File found
    */
   static find(auth: User | null, fileName: string): Promise<File> {
     return new Promise<File>((resolve, reject) => {
@@ -260,6 +266,12 @@ export class File implements IFile {
     })
   }
 
+  /**
+   * Fill in a File class from raw SQL data
+   * @param {any} rawSql Raw SQL data
+   * @param {User} user User to hold
+   * @returns {Promise<File>} File class with filled data
+   */
   private static fill(rawSql: any, user?: User): Promise<File> {
     return new Promise<File>(async (resolve, _) => {
       let file = new File();
@@ -274,7 +286,12 @@ export class File implements IFile {
     })
   }
 
-  static getAll(auth: User): Promise<File[]> {
+  /**
+   * Get all files for a user
+   * @param {User} auth Authorization
+   * @returns {Promise<File[]>} All files for the user
+   */
+  static all(auth: User): Promise<File[]> {
     return new Promise<File[]>((resolve, reject) => {
       Core.db.all('SELECT * FROM files WHERE application_id = ?', [ auth.application.id ], async (err, data) => {
         if (err)
