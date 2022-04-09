@@ -20,7 +20,8 @@
   "description": "Authentication backend that works with Veylib",
   "main": "test.js",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "docs": "move dist/data . & & move data dist"
   },
   "repository": {
     "type": "git",
