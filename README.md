@@ -26,3 +26,4 @@ Pull reqeusts will be reviewed and are welcome
 
 ## In progress:
 * Updating JSDoc
+* Invite system
