@@ -3,6 +3,7 @@ import { createLogger, Logger, LoggerOptions } from 'winston';
 import { Utils } from './utils/Utils';
 import { config } from 'dotenv';
 import { join } from 'path';
+import { genSaltSync } from 'bcrypt';
 import fs from 'fs';
 
 export class Core {
@@ -68,7 +69,7 @@ export class Core {
 
     // Check for PASSWORD_SALT, this is used in the hashString function in SecurityHelper
     if (!process.env.PASSWORD_SALT) {
-      process.env.PASSWORD_SALT = Utils.createString(50, true, true, true);
+      process.env.PASSWORD_SALT = genSaltSync(15);
       fs.appendFileSync('.env', `\nPASSWORD_SALT=${process.env.PASSWORD_SALT}`);
 
       Core.logger.info(`[ENV] Created PASSWORD_SALT in .env: ${process.env.PASSWORD_SALT}`);
@@ -87,3 +88,4 @@ export { Variable } from './types/Variable';
 export { Subscription } from './types/Subscription';
 export { SubscriptionLevel } from './types/SubscriptionLevel';
 export { File } from './types/File';
+export { Invite } from './types/Invite';
