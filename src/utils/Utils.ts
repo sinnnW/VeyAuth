@@ -30,7 +30,7 @@ export class Utils {
    * @returns {boolean} Whether the input has special characters or not
    */
   static hasSpecialChars(input: string): boolean {
-    return /[^a-zA-Z0-9.-_]/i.test(input);
+    return /[^a-zA-Z0-9.\-_]/i.test(input);
   }
 
   /**
