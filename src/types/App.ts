@@ -26,6 +26,7 @@ export class App implements IApp {
   publicSubscriptions: boolean;
   multipleSubscriptions: boolean;
   usersCanCreateFiles: boolean;
+  inviteOnly: boolean;
 
 	// Internal var to detect if there is changes for saving
 	#changes = false;
@@ -98,12 +99,21 @@ export class App implements IApp {
 
 	/**
 	* Update the applications owner
-	* @param newOwner The new owner
+	* @param {User} newOwner The new owner
 	*/
 	setOwner(newOwner: User) {
 		this.#changes = true;
 		this.owner = newOwner;
 	}
+
+  /**
+   * Set the application to invite only or not
+   * @param {boolean} inviteOnly 
+   */
+  setInviteOnly(inviteOnly: boolean) {
+    this.#changes = true;
+    this.inviteOnly = inviteOnly;
+  }
 
 	/**
 	* Save changes to the app
@@ -161,6 +171,10 @@ export class App implements IApp {
 					// Update disabled
 					Core.db.run('UPDATE applications SET disabled = ? WHERE id = ?', [this.disabled ? 1 : 0, this.id]);
 					Core.logger.debug('Updated disabled');
+
+          // Update invite_only
+          Core.db.run('UPDATE applications SET invite_only = ? WHERE id = ?', [this.inviteOnly, this.id]);
+          Core.logger.debug('Updated invite_only');
 
 					// Update disable_reason
 					Core.db.run('UPDATE applications SET disable_reason = ? WHERE id = ?', [this.disableReason == 'No reason' ? null : this.disableReason, this.id], async () => {
@@ -235,11 +249,11 @@ export class App implements IApp {
 	* @param {string} name Name of app
 	* @param {string} description App description
 	* @param {boolean} subscriptionsEnabled Are subscriptions enabled
-	* @param {boolean} inviteRequired Do new users need an invite
+	* @param {boolean} inviteOnly Do new users need an invite
 	* @param {boolean} hwidLocked Are user logins HWID locked
 	* @returns {Promise<App>} App created
 	*/
-	static create(auth: User, name: string, description?: string, subscriptionsEnabled: boolean = false, inviteRequired: boolean = false, hwidLocked: boolean = false): Promise<App> {
+	static create(auth: User, name: string, description?: string, subscriptionsEnabled: boolean = false, inviteOnly: boolean = false, hwidLocked: boolean = false): Promise<App> {
 		return new Promise<App>(async (resolve, reject) => {
 			Core.logger.debug(`Creating app ${name} with owner ${auth.format}`);
 			if (!auth?.permissions.has(FLAGS.CREATE_APPLICATION))
@@ -268,7 +282,7 @@ export class App implements IApp {
 							id += data.id || 0;
 
 						// Create the actual application
-						Core.db.run('INSERT INTO applications (id, owner_id, name, description, subscriptions_enabled, invite_required, hwid_locked) VALUES (?, ?, ?, ?, ?, ?, ?)', [id, auth.id, name, description, subscriptionsEnabled, inviteRequired, hwidLocked], async err => {
+						Core.db.run('INSERT INTO applications (id, owner_id, name, description, subscriptions_enabled, invite_only, hwid_locked) VALUES (?, ?, ?, ?, ?, ?, ?)', [id, auth.id, name, description, subscriptionsEnabled, inviteOnly, hwidLocked], async err => {
 							if (err)
 								return reject(err);
 							else {
@@ -349,6 +363,7 @@ export class App implements IApp {
       app.publicSubscriptions = data.subscriptions_public == 1 ? true : false;
       app.multipleSubscriptions = data.subscriptions_multiple == 1 ? true : false;
       app.usersCanCreateFiles = data.users_can_create_files == 1 ? true : false;
+      app.inviteOnly = data.invite_only == 1 ? true : false;
       
 			return resolve(app);
 		})
