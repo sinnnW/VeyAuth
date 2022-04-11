@@ -57,7 +57,7 @@ export class Subscription implements ISubscription {
       // Run all the save commands
       Core.db.serialize(() => {
         // Update disable_reason
-        Core.db.run('UPDATE subscriptions SET expires_at = ? WHERE id = ?', [(this.expiresAt?.getTime() || 1000) - 1000, this.id], async () => {
+        Core.db.run('UPDATE subscriptions SET expires_at = ? WHERE id = ?', [(this.expiresAt?.getTime() || 0) / 1000, this.id], async () => {
           Core.logger.debug('Updated disable_reason');
 
           // Updates were saved
@@ -202,7 +202,7 @@ export class Subscription implements ISubscription {
           sub.application = await App.get(data[x].application_id);
           sub.user = parent || await User.get(data[x].user_id);
           sub.level = await SubscriptionLevel.get(auth, sub.application, data[x].level_id);
-          sub.expiresAt = await new Date(data[x].expires_at * 1000);
+          sub.expiresAt = new Date(data[x].expires_at * 1000);
 
           subArr.push(sub);
         }
@@ -217,7 +217,7 @@ export class Subscription implements ISubscription {
         sub.application = await App.get(data.application_id);
         sub.user = parent || await User.get(data.user_id);
         sub.level = await SubscriptionLevel.get(auth, sub.application, data.level_id);
-        sub.expiresAt = await new Date(data.expires_at * 1000);
+        sub.expiresAt = new Date(data.expires_at * 1000);
 
         return resolve(sub);
       }
