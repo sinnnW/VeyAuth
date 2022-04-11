@@ -6,6 +6,7 @@ import { App } from './App';
 import { Utils } from '../utils/Utils';
 import { SecurityHelper } from '../utils/SecurityHelper';
 import { VariableManager } from './VariableManager';
+import { Invite } from './Invite';
 
 // Import managers
 import { SubscriptionManager } from './SubscriptionManager';
@@ -248,7 +249,7 @@ export class User implements IUser {
    * @param {UserPermissionsArray} permissions Permissions they will have
    * @returns {Promise<User>} User created
    */
-  static create(auth: User, app: App, username: string, password: string, permissions?: UserPermissionsArray): Promise<User> {
+  static create(auth: User, app: App, username: string, password: string, permissions?: UserPermissionsArray, inviteCode?: string): Promise<User> {
     return new Promise<User>((resolve, reject) => {
       // Make sure the auth user has permissions
       if (!auth.permissions.has(FLAGS.CREATE_USERS, app.id))
@@ -257,6 +258,9 @@ export class User implements IUser {
       // Only allow users to create users in their own application unless they are global users
       else if (auth.application.id != -1 && auth.application.id != app.id)
         return reject('You can only create users in your own application');
+
+      else if (app.inviteOnly && !inviteCode)
+        return reject('Application is invite only. You must supply an invite code to register');
 
       // Make sure that username doesn't contain stupid ass unicode or special chars.
       else if (Utils.hasSpecialChars(username))
@@ -273,22 +277,31 @@ export class User implements IUser {
         else if (data)
           return reject('Username is taken');
 
-        // Fallback ID is 0
-        var id = 0;
-
         // Get the application id
-        Core.db.get('SELECT id FROM users WHERE application_id = ? ORDER BY id DESC', [app.id], (err, data) => {
+        Core.db.get('SELECT id FROM users WHERE application_id = ? ORDER BY id DESC', [app.id], async (err, data) => {
           if (err)
             return reject(err); // This shit really does get repetitive don't it?
-          else if (data)
-            id = data.id + 1; // Increment the ID by 1 if there was data
+
+          // Generate the ID
+          let id = (data.id || 0) + 1;
 
           // Create the temp user
           let tmpusr = new User(true);
           tmpusr.application = app;
           tmpusr.id = id;
           tmpusr.username = username;
-          tmpusr.password = password; // Fucking password hashing, SHA256.
+          tmpusr.password = password; // Fucking password hashing, bcrypt.
+
+          // Make sure invite is valid
+          if (app.inviteOnly) {
+            let inv = await Invite.get(app, inviteCode || '');
+            if (inv.claimedBy)
+              return reject('Invite has already been claimed');
+            else if (inv.expires < new Date() && inv.expires.getTime() != 0)
+              return reject('Invite has expired')
+
+            Invite.claim(app, inviteCode || '', tmpusr);
+          }
 
           // If the user supplied a number for the permissions, translate it into a UserPermissionsArray
           if (permissions?.constructor.name === 'UserPermissionsArray')
