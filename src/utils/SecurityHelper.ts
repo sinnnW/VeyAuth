@@ -29,6 +29,7 @@ export class SecurityHelper {
    * @returns {string} Hashed and salted string
    */
   static hashString(input: string): string {
+    if (!input) return '';
     return hashSync(input, process.env.PASSWORD_SALT || '');
   }
 }
