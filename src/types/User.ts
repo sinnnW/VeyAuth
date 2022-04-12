@@ -5,12 +5,13 @@ import { UserPermissionsArray } from './UserPermissionsArray';
 import { App } from './App';
 import { Utils } from '../utils/Utils';
 import { SecurityHelper } from '../utils/SecurityHelper';
-import { VariableManager } from './VariableManager';
 import { Invite } from './Invite';
 
 // Import managers
 import { SubscriptionManager } from './SubscriptionManager';
 import { FileManager } from './FileManager';
+import { VariableManager } from './VariableManager';
+import { InviteManager } from './InviteManager';
 
 enum GET_FLAGS {
   GET_BY_ID,
@@ -31,9 +32,11 @@ export class User implements IUser {
   disableReason?: string = 'No reason';
   application: App;
 
+  // Managers
   files: FileManager;
   subscriptions: SubscriptionManager;
   variables: VariableManager;
+  invites: InviteManager;
 
   // Internal var to detect if there is changes for saving
   #changes = false;
@@ -418,15 +421,19 @@ export class User implements IUser {
         usr.disableReason = data.disable_reason;
         // usr.variables = (await Variable.all(usr)).filter(itm => itm.user) as Variable[];
 
-        // Managers
-        usr.subscriptions = new SubscriptionManager(usr);
-        usr.files = new FileManager(usr);
-        usr.variables = new VariableManager(usr);
-
-        // Pull the data
-        await usr.subscriptions._getData();
-        await usr.files._getData();
-        await usr.variables._getData();
+        if (authed) {
+          // Managers
+          usr.subscriptions = new SubscriptionManager(usr);
+          usr.files = new FileManager(usr);
+          usr.variables = new VariableManager(usr);
+          usr.invites = new InviteManager(usr);
+  
+          // Pull the data
+          await usr.subscriptions._getData();
+          await usr.files._getData();
+          await usr.variables._getData();
+          await usr.invites._getData();
+        }
 
         // Application specified permissions
         Core.db.all('SELECT * FROM permissions WHERE user_id = ?', [usr.id], (err2, row2: any) => {
