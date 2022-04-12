@@ -91,6 +91,13 @@ export class Invite implements IInvite {
     return Invite.delete(auth, this.application, this.code);
   }
 
+  /**
+   * Delete an invite code
+   * @param {User} auth Authorization
+   * @param {App} app Application
+   * @param {string} code Invite code
+   * @returns {Promise<void>}
+   */
   static delete(auth: User, app: App, code: string): Promise<void> {
     return new Promise(async (resolve, reject) => {
       let inv = await Invite.get(app, code);
@@ -173,6 +180,51 @@ export class Invite implements IInvite {
   }
 
   /**
+   * Get all invites that a user has generated
+   * @param auth Authorization or user
+   * @param user User to check
+   * @returns {Promise<Invite[]>} Invites generated
+   */
+  static getAll(auth: User, user?: User): Promise<Invite[]> {
+    return new Promise<Invite[]>((resolve, reject) => {
+      if (!user)
+        user = auth;
+      else if (auth.id != user.id && auth.permissions.has(FLAGS.VIEW_INVITES, user.application.id))
+        return reject('Invalid permissions');
+
+      let invs: Invite[] = [];
+
+      Core.db.all('SELECT * FROM invites WHERE application_id = ? AND created_by = ?', [ user.application.id, user.id ], async (err, data) => {
+        if (err)
+          return reject(err);
+
+        for (let x = 0;x < data.length;x++) {
+          let i = await Invite.fill(data[x], user);
+          invs.push(i);
+        }
+
+        return resolve(invs);
+      })
+    })
+  }
+
+  static getClaimed(auth: User, user?: User): Promise<Invite | null> {
+    return new Promise<Invite | null>((resolve, reject) => {
+      if (!user)
+        user = auth;
+      else if (auth.id != user.id && auth.permissions.has(FLAGS.VIEW_INVITES, user.application.id))
+        return reject('Invalid permissions');
+
+      Core.db.get('SELECT * FROM invites WHERE application_id = ? AND claimed_by = ?', [ user.application.id, user.id ], async (err, data) => {
+        if (err)
+          return reject(err);
+
+        return resolve(data ? await Invite.fill(data, undefined, user) : null);
+      })
+    })
+  }
+
+  /**
    * Create a new invite
    * @param {User} auth Authorization
    * @param {App} app Application 
@@ -198,16 +250,17 @@ export class Invite implements IInvite {
   /**
    * Fill in data
    * @param {any} data 
-   * @param createdBy 
-   * @returns 
+   * @param {User} createdBy User it was created by
+   * @param {User} claimedBy User it was claimed by
+   * @returns {Promise<Invite>} Invite data filled in
    */
-  static fill(data: any, createdBy?: User): Promise<Invite> {
+  static fill(data: any, createdBy?: User, claimedBy?: User): Promise<Invite> {
     return new Promise<Invite>(async (resolve, _) => {
       var i = new this();
       i.code = data.code;
       i.application = await App.get(data.application_id);
       i.createdBy = createdBy || await User.get(data.created_by);
-      i.claimedBy = data.claimed_by ? await User.get(data.claimed_by) : null;
+      i.claimedBy = claimedBy || data.claimed_by ? await User.get(data.claimed_by) : null;
       i.expires = new Date(data.expires_at * 1000);
 
       return resolve(i);
