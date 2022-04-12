@@ -20,10 +20,11 @@ I needed to recode my legacy authentication system I had originally wrote for a 
 Pull reqeusts will be reviewed and are welcome
 
 ## Todo:
-* Create an invite system + manager
+* Write good code comments
+* Write good debug logs
 * Add global methods:
   * Recalculate all tokens (good for if session secret changes/pass salt)
 
 ## In progress:
 * Updating JSDoc
-* Invite system
+* Write User manager
