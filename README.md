@@ -22,9 +22,9 @@ Pull reqeusts will be reviewed and are welcome
 ## Todo:
 * Write good code comments
 * Write good debug logs
+* Write Admin manager?
 * Add global methods:
   * Recalculate all tokens (good for if session secret changes/pass salt)
 
 ## In progress:
 * Updating JSDoc
-* Write User manager
