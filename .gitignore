@@ -11,3 +11,4 @@ statistics.js
 *.env
 *.test.txt
 docs/
+jsdoc.json
