@@ -300,7 +300,7 @@ export class User implements IUser {
             else if (inv.expires < new Date() && inv.expires.getTime() != 0)
               return reject('Invite has expired')
 
-            Invite.claim(app, inviteCode || '', tmpusr);
+            Invite.claim(app, tmpusr, inviteCode || '');
           }
 
           // If the user supplied a number for the permissions, translate it into a UserPermissionsArray
