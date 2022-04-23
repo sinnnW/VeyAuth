@@ -1,0 +1,15 @@
+.vscode/
+.vs/
+node_modules/
+src/
+*.db
+*.log
+originalauth.js
+notes.txt
+test.js
+statistics.js
+*.env
+*.test.txt
+docs/
+jsdoc.json
+test.js
