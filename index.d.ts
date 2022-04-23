@@ -7,3 +7,4 @@ export { Subscription } from path.join(__dirname, 'dist/types/Subscription.js');
 export { SubscriptionLevel } from path.join(__dirname, 'dist/types/SubscriptionLevel.js');
 export { File } from path.join(__dirname, 'dist/types/File.js');
 export { Invite } from path.join(__dirname, 'dist/types/Invite.js');
+export { Utils } from path.join(__dirname, 'dist/utils/Utils.js');

@@ -1,4 +1,4 @@
-const path = require('path')
+const path = require('path');
 
 module.exports = {
   Core: require(path.join(__dirname, 'dist/index.js')).Core,
@@ -9,5 +9,6 @@ module.exports = {
   Subscription: require(path.join(__dirname, 'dist/types/Subscription.js')).Subscription,
   SubscriptionLevel: require(path.join(__dirname, 'dist/types/SubscriptionLevel.js')).SubscriptionLevel,
   File: require(path.join(__dirname, 'dist/types/File.js')).File,
-  Invite: require(path.join(__dirname, 'dist/types/Invite.js')).Invite
+  Invite: require(path.join(__dirname, 'dist/types/Invite.js')).Invite,
+  Utils: require(path.join(__dirname, 'dist/utils/Utils.js')).Utils,
 }

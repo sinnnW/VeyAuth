@@ -10,6 +10,7 @@ export class Core {
   static db: Database;
   static logger: Logger;
   static dataDir: string;
+  static started = false;
 
   static start(loggerOpts: LoggerOptions = {}) {
     this.logger = createLogger(loggerOpts);
@@ -86,5 +87,6 @@ export class Core {
 
     // Finished loading this shitshow
     this.logger.info('Finished loading VeyAuth!');
+    this.started = true;
   }
 }
