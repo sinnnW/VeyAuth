@@ -12,3 +12,4 @@ statistics.js
 *.test.txt
 docs/
 jsdoc.json
+test.js
