@@ -182,16 +182,16 @@ export class File implements IFile {
   /**
    * Create a new file for a user
    * @param {User} auth Authorization
-   * @param {App} application Application
+   * @param {App} app Application
    * @param {User} user User
    * @param {string} fileName File name
    * @param {string} data The file's data
    * @param {boolean} priv Private
    * @returns {Promise<File>} File created
    */
-  static create(auth: User, application: App, user: User | null, fileName: string, data: string, priv: boolean = true): Promise<File> {
-    return new Promise<File>((resolve, reject) => {
-      if (!auth?.permissions.has(FLAGS.UPLOAD_FILES) && !application.usersCanCreateFiles && auth.id == user?.id)
+  static create(auth: User, app: App, user: User | null, fileName: string, data: string, priv: boolean = true): Promise<File> {
+    return new Promise<File>((_, reject) => {
+      if (!auth?.permissions.has(FLAGS.UPLOAD_FILES) && !app.usersCanCreateFiles && auth.id == user?.id)
         return reject('Invalid permissions');
 
       else if (Utils.hasSpecialChars(fileName))
@@ -201,18 +201,40 @@ export class File implements IFile {
       if (!fs.existsSync(join(Core.dataDir, 'uploads')))
         fs.mkdirSync(join(Core.dataDir, 'uploads'));
       
-      if (!fs.existsSync(join(Core.dataDir, 'uploads', application.id.toString())))
-        fs.mkdirSync(join(Core.dataDir, 'uploads', application.id.toString()));
+      if (!fs.existsSync(join(Core.dataDir, 'uploads', app.id.toString())))
+        fs.mkdirSync(join(Core.dataDir, 'uploads', app.id.toString()));
 
-      fs.writeFileSync(join(Core.dataDir, 'uploads', application.id.toString(), fileName), data);
+      let filePath = join(Core.dataDir, 'uploads', app.id.toString(), fileName);
+      fs.writeFileSync(filePath, data);
 
-      Core.db.get('SELECT id FROM files WHERE application_id = ? ORDER BY id DESC', [ application.id ], (err, data) => {
+      return this.register(auth, app, user, filePath, priv);
+    })
+  }
+
+  /**
+   * Register an already existing file as a file for a user/application
+   * @param {User} auth Authorization
+   * @param {App} app Application
+   * @param {User} user User
+   * @param {string} fileName Full path to file
+   * @param {boolean} priv Private
+   * @returns {Promise<File>} File registered
+   */
+  static register(auth: User, app: App, user: User | null, fileName: string, priv: boolean): Promise<File> {
+    return new Promise<File>((resolve, reject) => {
+      if (!auth?.permissions.has(FLAGS.UPLOAD_FILES) && !app.usersCanCreateFiles && auth.id == user?.id)
+        return reject('Invalid permissions');
+
+      if (!fs.existsSync(fileName))
+        return reject('File not found');
+
+      Core.db.get('SELECT id FROM files WHERE application_id = ? ORDER BY id DESC', [ app.id ], (err, data) => {
         if (err)
           return reject(err);
 
         let id = (data?.id || 0) + 1; 
 
-        Core.db.run('INSERT INTO files (id, application_id, user_id, file_name, private) VALUES (?, ?, ?, ?, ?)', [id, application.id, user?.id, fileName, priv], async err => {
+        Core.db.run('INSERT INTO files (id, application_id, user_id, file_name, private) VALUES (?, ?, ?, ?, ?)', [id, app.id, user?.id, fileName, priv], async err => {
           if (err)
             return reject(err);
           
