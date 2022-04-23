@@ -6,12 +6,12 @@ import { join } from 'path';
 import { genSaltSync } from 'bcrypt';
 import fs from 'fs';
 
-export class Core {
+export default class Core {
   static db: Database;
   static logger: Logger;
   static dataDir: string;
 
-  constructor(loggerOpts: LoggerOptions) {
+  static start(loggerOpts: LoggerOptions = {}) {
     Core.logger = createLogger(loggerOpts);
     Core.logger.info('Starting VeyAuth by verlox...');
     Core.dataDir = join(__dirname, 'data');
