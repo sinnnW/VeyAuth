@@ -6,7 +6,7 @@ import { join } from 'path';
 import { genSaltSync } from 'bcrypt';
 import fs from 'fs';
 
-export default class Core {
+export class Core {
   static db: Database;
   static logger: Logger;
   static dataDir: string;
