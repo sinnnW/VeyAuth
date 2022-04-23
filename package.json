@@ -18,7 +18,7 @@
   "name": "veyauth",
   "version": "1.0.4",
   "description": "Authentication backend that works with Veylib",
-  "main": "test.js",
+  "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
     "build": "tsc",
