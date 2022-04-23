@@ -10,9 +10,11 @@ dist/data/
 *.env
 *.test.txt
 
+jsdoc.json
+tsconfig.json
+
 originalauth.js
-notes.txt
 test.js
 statistics.js
-jsdoc.json
 test.js
+notes.txt
