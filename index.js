@@ -4,7 +4,7 @@ module.exports = {
   Core: require(path.join(__dirname, 'dist/index.js')).Core,
   App: require(path.join(__dirname, 'dist/types/App.js')).App,
   User: require(path.join(__dirname, 'dist/types/User.js')).User,
-  UserPermissions: require(path.join(__dirname, 'dist/types/UserPermissions.js')).User,
+  UserPermissions: require(path.join(__dirname, 'dist/types/UserPermissions.js')).UserPermissions,
   Variable: require(path.join(__dirname, 'dist/types/Variable.js')).Variable,
   Subscription: require(path.join(__dirname, 'dist/types/Subscription.js')).Subscription,
   SubscriptionLevel: require(path.join(__dirname, 'dist/types/SubscriptionLevel.js')).SubscriptionLevel,

@@ -16,7 +16,7 @@
     "winston": "^3.4.0"
   },
   "name": "veyauth",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "Authentication backend that works with Veylib",
   "main": "index.js",
   "types": "index.d.ts",
