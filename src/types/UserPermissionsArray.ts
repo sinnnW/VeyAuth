@@ -28,7 +28,7 @@ export class UserPermissionsArray {
    * @param {number} appId Application ID
    * @returns {boolean} Permission status
    */
-  has(bit: number, appId?: number): boolean {
+  has(bit: number, appId: number = -1): boolean {
     // Make sure that parentUser is defined, and that the user is authenticated
     if (!this.#parentUser?.authenticated)
       return false;
@@ -37,11 +37,11 @@ export class UserPermissionsArray {
     var gbf = new BitField(FLAGS, this.#currentPermissions[-1]?.field, [FLAGS.ADMIN]);
 
     // Application specific permissions
-    var bf = new BitField(FLAGS, this.#currentPermissions[appId || -1]?.field, [FLAGS.ADMIN]);
+    var bf = new BitField(FLAGS, this.#currentPermissions[appId]?.field, [FLAGS.ADMIN]);
 
 
     // See if they have the global permission, the app permission, or are the owner of the app
-    if (bf.has(bit) || gbf?.has(bit) || this.#parentUser?.application.owner.id === this.#parentUser?.id)
+    if (bf.has(bit) || gbf?.has(bit) || this.#parentUser.application.owner?.id === this.#parentUser?.id)
       return true;
     else
       return false;

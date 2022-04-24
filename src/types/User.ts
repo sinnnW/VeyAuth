@@ -68,13 +68,13 @@ export class User implements IUser {
       if (!auth?.permissions.has(FLAGS.MODIFY_USERS, this.application.id))
         return reject('Invalid permissions')
 
-      var token = SecurityHelper.encodeUser(this)
-      Core.db.run('UPDATE users SET token = ? WHERE id = ?', [token, this.id], err => {
+      this.token = SecurityHelper.encodeUser(this)
+      Core.db.run('UPDATE users SET token = ? WHERE id = ?', [this.token, this.id], err => {
         if (err)
           return reject(err);
         else {
-          Core.logger.debug(`Recalculated token for ${this.format}: ${token}, auth: ${auth.format}`);
-          return resolve(token);
+          Core.logger.debug(`Recalculated token for ${this.format}: ${this.token}, auth: ${auth.format}`);
+          return resolve(this.token);
         }
       })
     })
