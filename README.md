@@ -3,6 +3,7 @@
 # VeyAuth
 
 [![wakatime](https://wakatime.com/badge/user/0ccf7ed5-30a2-486d-8ea4-6b0ca58cd9c9/project/a7491882-9f08-4629-9011-5256d69e6a08.svg)](https://wakatime.com/badge/user/0ccf7ed5-30a2-486d-8ea4-6b0ca58cd9c9/project/a7491882-9f08-4629-9011-5256d69e6a08)
+[![npm version](https://badge.fury.io/js/veyauth.svg)](https://badge.fury.io/js/veyauth)
 
 # This is currently a work in progress!
 A (soon to be) node package in TypeScript for a simplified authentication system
