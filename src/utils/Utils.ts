@@ -11,8 +11,10 @@ export class Utils {
     var s = '';
     var chars = '';
 
-    if (includeLetters)
+    if (includeLetters) {
       chars += 'abcdefghijklmnopqrstuvwxyz';
+      chars += chars.toUpperCase();
+    }
     if (includeNumbers)
       chars += '1234567890';
     if (includeSpecial)
