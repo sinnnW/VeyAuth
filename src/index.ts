@@ -26,7 +26,8 @@ export class Core {
     this.logger.info(`Data directory: ${this.dataDir}`);
 
     // Create / load database
-    this.db = new Database(join(this.dataDir, 'auth.db'));
+    if (!this.db)
+      this.db = new Database(join(this.dataDir, 'auth.db'));
 
     // Load .env vars
     config();
