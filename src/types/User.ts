@@ -371,9 +371,9 @@ export class User implements IUser {
    * @param {number} id ID
    * @returns {Promise<User>} User found
    */
-  static get(id: number): Promise<User> {
+  static get(app: App, id: number): Promise<User> {
     return new Promise((resolve, reject) => {
-      Core.db.get('SELECT * FROM users WHERE id = ?', [id], async (err, data) => {
+      Core.db.get('SELECT * FROM users WHERE application_id = ? AND id = ?', [app.id, id], async (err, data) => {
         if (err)
           return reject(err);
         else if (!data)
