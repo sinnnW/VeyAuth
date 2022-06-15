@@ -259,8 +259,8 @@ export class Invite implements IInvite {
       var i = new this();
       i.code = data.code;
       i.application = await App.get(data.application_id);
-      i.createdBy = createdBy || await User.get(data.created_by);
-      i.claimedBy = claimedBy || data.claimed_by ? await User.get(data.claimed_by) : null;
+      i.createdBy = createdBy || await User.get(i.application, data.created_by);
+      i.claimedBy = claimedBy || data.claimed_by ? await User.get(i.application, data.claimed_by) : null;
       i.expires = new Date(data.expires_at * 1000);
 
       return resolve(i);

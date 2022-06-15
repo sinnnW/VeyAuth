@@ -300,7 +300,7 @@ export class File implements IFile {
 
       file.id = rawSql.id;
       file.application = await App.get(rawSql.application_id);
-      file.user = user || await User.get(rawSql.user_id);
+      file.user = user || await User.get(file.application, rawSql.user_id);
       file.name = rawSql.file_name;
       file.private = rawSql.private == 1 ? true : false;
 

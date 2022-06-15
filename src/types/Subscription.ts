@@ -195,12 +195,12 @@ export class Subscription implements ISubscription {
   
         for (var x = 0;x < data.length;x++) {
           var sub = new Subscription();
-      
+
           sub.id = data[x].id;
           sub.disabled = data[x].disabled == 1 ? true : false;
           sub.disableReason = data[x].disable_reason;
           sub.application = await App.get(data[x].application_id);
-          sub.user = parent || await User.get(data[x].user_id);
+          sub.user = parent || await User.get(sub.application, data[x].user_id);
           sub.level = await SubscriptionLevel.get(auth, sub.application, data[x].level_id);
           sub.expiresAt = new Date(data[x].expires_at * 1000);
 
@@ -215,7 +215,7 @@ export class Subscription implements ISubscription {
         sub.disabled = data.disabled == 1 ? true : false;
         sub.disableReason = data.disable_reason;
         sub.application = await App.get(data.application_id);
-        sub.user = parent || await User.get(data.user_id);
+        sub.user = parent || await User.get(sub.application, data.user_id);
         sub.level = await SubscriptionLevel.get(auth, sub.application, data.level_id);
         sub.expiresAt = new Date(data.expires_at * 1000);
 

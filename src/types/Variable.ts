@@ -146,7 +146,7 @@ export class Variable implements IVariable {
       if (user)
         v.user = user;
       else if (rawSql.user_id)
-        v.user = await User.get(rawSql.user_id);
+        v.user = await User.get(v.application, rawSql.user_id);
 
       return resolve(v);
     })

@@ -350,7 +350,7 @@ export class App implements IApp {
 			// Set the properties from the db
 			if (!omitOwner) {
 				try {
-					app.owner = await User.get(data.owner_id);
+					app.owner = await User.get(await this.get(data.id), data.owner_id);
 				} catch { }
 			}
 
