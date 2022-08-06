@@ -413,15 +413,17 @@ export class User implements IUser {
         // Set the properties from the db
         usr.id = data.id;
         usr.username = data.username;
-        usr.hwid = data.hwid;
         usr.permissions = new UserPermissionsArray(FLAGS.USER, usr);//[-1, new UserPermissions(data.permissions)];
-        usr.token = data.token;
-        usr.password = data.password;
         usr.disabled = data.disabled == 1 ? true : false;
         usr.disableReason = data.disable_reason;
         // usr.variables = (await Variable.all(usr)).filter(itm => itm.user) as Variable[];
 
         if (authed) {
+          // Sensitive information
+          usr.hwid = data.hwid;
+          usr.token = data.token;
+          usr.password = data.password;
+
           // Managers
           usr.subscriptions = new SubscriptionManager(usr);
           usr.files = new FileManager(usr);
