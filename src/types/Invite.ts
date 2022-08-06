@@ -67,7 +67,7 @@ export class Invite implements IInvite {
       Core.logger.debug(`Saving invite information for ${this.format}, auth: ${auth.format}`);
       Core.db.serialize(() => {
         // Update expires_at
-        Core.db.run('UPDATE invites SET expires_at = ? WHERE application_id = ? AND code = ?', [this.expires.getTime() / 1000, this.application.id, this.code], async () => {
+        Core.db.run('UPDATE invites SET expires_at = ? WHERE for_application_id = ? AND code = ?', [this.expires.getTime() / 1000, this.application.id, this.code], async () => {
           Core.logger.debug('Updated disable_reason');
 
           // Updates were saved
@@ -105,7 +105,7 @@ export class Invite implements IInvite {
       if (!auth?.permissions.has(FLAGS.DELETE_INVITES, app.id) && auth?.id != inv.createdBy.id)
         return reject('Invalid permissions');
 
-      Core.db.run('DELETE FROM invites WHERE application_id = ? AND code = ?', [app.id, code], err => {
+      Core.db.run('DELETE FROM invites WHERE for_application_id = ? AND code = ?', [app.id, code], err => {
         if (err)
           return reject(err);
 
@@ -127,7 +127,7 @@ export class Invite implements IInvite {
       if (inv.claimedBy != null)
         return reject('Invite has already been claimed');
       
-      Core.db.run('UPDATE invites SET claimed_by = ? WHERE application_id = ? AND code = ?', [user.id, app.id, code], err => {
+      Core.db.run('UPDATE invites SET claimed_by = ? WHERE for_application_id = ? AND code = ?', [user.id, app.id, code], err => {
         if (err)
           return reject(err)
         
@@ -149,7 +149,7 @@ export class Invite implements IInvite {
 
       let code = codeSegments.join('-');
 
-      Core.db.get('SELECT * FROM invites WHERE application_id = ? AND code = ?', [ app.id, code ], async (err, data) => {
+      Core.db.get('SELECT * FROM invites WHERE for_application_id = ? AND code = ?', [ app.id, code ], async (err, data) => {
         if (err)
           return reject(err);
         else if (data)
@@ -168,7 +168,7 @@ export class Invite implements IInvite {
    */
   static get(app: App, code: string): Promise<Invite> {
     return new Promise<Invite>((resolve, reject) => {
-      Core.db.get('SELECT * FROM invites WHERE application_id = ? AND code = ?', [app.id, code], async (err, data) => {
+      Core.db.get('SELECT * FROM invites WHERE for_application_id = ? AND code = ?', [app.id, code], async (err, data) => {
         if (err)
           return reject(err);
         else if (!data)
@@ -194,7 +194,7 @@ export class Invite implements IInvite {
 
       let invs: Invite[] = [];
 
-      Core.db.all('SELECT * FROM invites WHERE application_id = ? AND created_by = ?', [ user.application.id, user.id ], async (err, data) => {
+      Core.db.all('SELECT * FROM invites WHERE for_application_id = ? AND created_by = ?', [ user.application.id, user.id ], async (err, data) => {
         if (err)
           return reject(err);
 
@@ -215,7 +215,7 @@ export class Invite implements IInvite {
       else if (auth.id != user.id && auth.permissions.has(FLAGS.VIEW_INVITES, user.application.id))
         return reject('Invalid permissions');
 
-      Core.db.get('SELECT * FROM invites WHERE application_id = ? AND claimed_by = ?', [ user.application.id, user.id ], async (err, data) => {
+      Core.db.get('SELECT * FROM invites WHERE for_application_id = ? AND claimed_by = ?', [ user.application.id, user.id ], async (err, data) => {
         if (err)
           return reject(err);
 
@@ -238,7 +238,7 @@ export class Invite implements IInvite {
         return reject('Invalid permissions');
 
       let code = await this.#generateCode(app);
-      Core.db.run('INSERT INTO invites (code, application_id, created_by, expires_at) VALUES (?, ?, ?, ?)', [ code, app.id, user?.id || auth?.id, (expires?.getDate() || 0) / 1000], async err => {
+      Core.db.run('INSERT INTO invites (code, creator_application_id, for_application_id, created_by, expires_at) VALUES (?, ?, ?, ?)', [ code, auth.application.id, app.id, user?.id || auth?.id, (expires?.getDate() || 0) / 1000], async err => {
         if (err)
           return reject(err);
 
@@ -258,8 +258,8 @@ export class Invite implements IInvite {
     return new Promise<Invite>(async (resolve, _) => {
       var i = new this();
       i.code = data.code;
-      i.application = await App.get(data.application_id);
-      i.createdBy = createdBy || await User.get(i.application, data.created_by);
+      i.application = await App.get(data.for_application_id);
+      i.createdBy = createdBy || await User.get(await App.get(data.creator_application_id), data.created_by);
       i.claimedBy = claimedBy || data.claimed_by ? await User.get(i.application, data.claimed_by) : null;
       i.expires = new Date(data.expires_at * 1000);
 
