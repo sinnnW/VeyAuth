@@ -186,7 +186,8 @@ export class User implements IUser {
           Core.logger.debug('Updated username');
 
           // Update password
-          Core.db.run('UPDATE users SET password = ? WHERE id = ?', [SecurityHelper.hashString(this.password), this.id]);
+          this.password = SecurityHelper.hashString(this.password);
+          Core.db.run('UPDATE users SET password = ? WHERE id = ?', [this.password, this.id]);
           Core.logger.debug('Updated password');
 
           // Update disabled
