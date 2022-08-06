@@ -271,6 +271,12 @@ export class User implements IUser {
 
       // Hash this shit off the bat
       password = SecurityHelper.hashString(password);
+
+      // If the user supplied a number for the permissions, translate it into a UserPermissionsArray
+      if (typeof permissions === 'number')
+        permissions = new UserPermissionsArray(permissions);
+      else if (!permissions)
+        permissions = new UserPermissionsArray(FLAGS.USER);
       Core.logger.debug(`Creating user ${username}:${password} with global permissions level of ${permissions?.get(-1).field || 0}`);
 
       // Gotta make sure that the username isn't already taken
@@ -294,10 +300,14 @@ export class User implements IUser {
           tmpusr.id = id;
           tmpusr.username = username;
           tmpusr.password = password; // Fucking password hashing, bcrypt.
+          tmpusr.permissions = <UserPermissionsArray>permissions;
 
           // Make sure invite is valid
           if (app.inviteOnly) {
-            let inv = await Invite.get(app, inviteCode || '');
+            let inv = <Invite>await Invite.get(app, inviteCode || '').catch(reject);
+            if (!inv)
+              return;
+
             if (inv.claimedBy)
               return reject('Invite has already been claimed');
             else if (inv.expires < new Date() && inv.expires.getTime() != 0)
@@ -305,14 +315,6 @@ export class User implements IUser {
 
             Invite.claim(app, tmpusr, inviteCode || '');
           }
-
-          // If the user supplied a number for the permissions, translate it into a UserPermissionsArray
-          if (permissions?.constructor.name === 'UserPermissionsArray')
-            tmpusr.permissions = permissions;
-          else if (typeof permissions === 'number')
-            tmpusr.permissions = new UserPermissionsArray(permissions);
-          else
-            tmpusr.permissions = new UserPermissionsArray(FLAGS.USER);
 
           // Save the permissions
           tmpusr.permissions.setParent(tmpusr);
