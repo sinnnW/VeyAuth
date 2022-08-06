@@ -23,14 +23,14 @@ export class App implements IApp {
 	description: string;
 	owner: User;
 	allowUserSelfDeletion: boolean;
-  publicSubscriptions: boolean;
-  multipleSubscriptions: boolean;
-  usersCanCreateFiles: boolean;
-  inviteOnly: boolean;
+	publicSubscriptions: boolean;
+	multipleSubscriptions: boolean;
+	usersCanCreateFiles: boolean;
+	inviteOnly: boolean;
 
 	// Internal var to detect if there is changes for saving
 	#changes = false;
-  #deleted = false;
+	#deleted = false;
 
 	// Internal var for previous name, since it has to check on save()
 	#prevName: string | null;
@@ -106,14 +106,14 @@ export class App implements IApp {
 		this.owner = newOwner;
 	}
 
-  /**
-   * Set the application to invite only or not
-   * @param {boolean} inviteOnly 
-   */
-  setInviteOnly(inviteOnly: boolean) {
-    this.#changes = true;
-    this.inviteOnly = inviteOnly;
-  }
+	/**
+	 * Set the application to invite only or not
+	 * @param {boolean} inviteOnly 
+	 */
+	setInviteOnly(inviteOnly: boolean) {
+		this.#changes = true;
+		this.inviteOnly = inviteOnly;
+	}
 
 	/**
 	* Save changes to the app
@@ -122,14 +122,14 @@ export class App implements IApp {
 	*/
 	save(auth: User): Promise<App> {
 		return new Promise<App>((resolve, reject) => {
-      if (this.#deleted)
-        return reject('Application does not exist');
+			if (this.#deleted)
+				return reject('Application does not exist');
 
-      else if (this.id == -1)
-        return reject('This application cannot be modified'); 
-        
-      else if (!this.#prevName)
-        this.#prevName = this.name;
+			else if (this.id == -1)
+				return reject('This application cannot be modified');
+
+			else if (!this.#prevName)
+				this.#prevName = this.name;
 
 			// If this is true, there are no changes to make
 			if (!this.#changes)
@@ -172,9 +172,9 @@ export class App implements IApp {
 					Core.db.run('UPDATE applications SET disabled = ? WHERE id = ?', [this.disabled ? 1 : 0, this.id]);
 					Core.logger.debug('Updated disabled');
 
-          // Update invite_only
-          Core.db.run('UPDATE applications SET invite_only = ? WHERE id = ?', [this.inviteOnly, this.id]);
-          Core.logger.debug('Updated invite_only');
+					// Update invite_only
+					Core.db.run('UPDATE applications SET invite_only = ? WHERE id = ?', [this.inviteOnly, this.id]);
+					Core.logger.debug('Updated invite_only');
 
 					// Update disable_reason
 					Core.db.run('UPDATE applications SET disable_reason = ? WHERE id = ?', [this.disableReason == 'No reason' ? null : this.disableReason, this.id], async () => {
@@ -182,7 +182,7 @@ export class App implements IApp {
 
 						// Updates were saved
 						this.#changes = false;
-            this.#prevName = null;
+						this.#prevName = null;
 
 						// Return the updated user
 						Core.logger.debug(`Saved application information for ${this.format}`);
@@ -193,15 +193,15 @@ export class App implements IApp {
 		})
 	}
 
-  /**
-   * Delete the current application
-   * @param {User} auth Authorization
-   * @returns {Promise<void>}
-   */
-  remove(auth: User): Promise<void> {
-    this.#deleted = true;
-    return App.remove(auth, this);
-  }
+	/**
+	 * Delete the current application
+	 * @param {User} auth Authorization
+	 * @returns {Promise<void>}
+	 */
+	remove(auth: User): Promise<void> {
+		this.#deleted = true;
+		return App.remove(auth, this);
+	}
 
 	/**
 	* Get the amount of users in the database for the app
@@ -217,14 +217,14 @@ export class App implements IApp {
 		})
 	}
 
-  /**
-   * Remove an application
-   * @param {User} auth Authorization
-   * @param {App} app Application
-   * @returns {Promise<void>}
-   */
-  static remove(auth: User, app: App): Promise<void> {
-    return new Promise((resolve, reject) => {
+	/**
+	 * Remove an application
+	 * @param {User} auth Authorization
+	 * @param {App} app Application
+	 * @returns {Promise<void>}
+	 */
+	static remove(auth: User, app: App): Promise<void> {
+		return new Promise((resolve, reject) => {
 			// Make sure user has permission
 			if (!auth?.permissions.has(FLAGS.MODIFY_USERS, app.id))
 				return reject('Invalid permissions');
@@ -232,16 +232,16 @@ export class App implements IApp {
 			Core.db.serialize(() => {
 				Core.db.run('DELETE FROM applications WHERE id = ?', [app.id]);
 				Core.db.run('DELETE FROM users WHERE application_id = ?', [app.id]);
-        Core.db.run('DELETE FROM variables WHERE application_id = ?', [app.id]);
-        Core.db.run('DELETE FROM subscriptions WHERE application_id = ?', [app.id]);
-        Core.db.run('DELETE FROM subscription_levels WHERE application_id = ?', [app.id]);
+				Core.db.run('DELETE FROM variables WHERE application_id = ?', [app.id]);
+				Core.db.run('DELETE FROM subscriptions WHERE application_id = ?', [app.id]);
+				Core.db.run('DELETE FROM subscription_levels WHERE application_id = ?', [app.id]);
 				Core.db.run('DELETE FROM permissions WHERE application_id = ?', [app.id], () => {
 					Core.logger.debug(`Deleted application ${app.format}`);
 					resolve();
 				});
 			})
 		})
-  }
+	}
 
 	/**
 	* Create an application
@@ -304,7 +304,7 @@ export class App implements IApp {
    * @returns {Promise<App>} Application found
    */
 	static find(name: string, omitOwner: boolean = false): Promise<App> {
-    return new Promise<App>((resolve, reject) => {
+		return new Promise<App>((resolve, reject) => {
 			Core.db.get('SELECT * FROM applications WHERE name = ?', [name], (err, data) => {
 				if (err)
 					return reject(err)
@@ -316,14 +316,14 @@ export class App implements IApp {
 		})
 	}
 
-  /**
-   * Get an application by ID
-   * @param {number} id Application ID
-   * @param {boolean} omitOwner Should we remove the owner from the result
-   * @returns {Promise<App>} Application found
-   */
-  static get(id: number, omitOwner: boolean = false): Promise<App> {
-    return new Promise<App>((resolve, reject) => {
+	/**
+	 * Get an application by ID
+	 * @param {number} id Application ID
+	 * @param {boolean} omitOwner Should we remove the owner from the result
+	 * @returns {Promise<App>} Application found
+	 */
+	static get(id: number, omitOwner: boolean = false): Promise<App> {
+		return new Promise<App>((resolve, reject) => {
 			// check if application already exists in _db
 			Core.db.get('SELECT * FROM applications WHERE id = ?', [id], (err, data) => {
 				if (err)
@@ -335,14 +335,14 @@ export class App implements IApp {
 					this.fill(data, omitOwner).then(resolve); // No catch, because nothing can reject, its just formatting
 			})
 		})
-  }
+	}
 
-  /**
-   * Fill in an application class from raw SQL data
-   * @param {any} data Raw SQL output
-   * @param {boolean} omitOwner Do not add owner to the class (can prevent infinite loops)
-   * @returns {Promise<App>} Application that was filled in
-   */
+	/**
+	 * Fill in an application class from raw SQL data
+	 * @param {any} data Raw SQL output
+	 * @param {boolean} omitOwner Do not add owner to the class (can prevent infinite loops)
+	 * @returns {Promise<App>} Application that was filled in
+	 */
 	private static fill(data: any, omitOwner: boolean): Promise<App> {
 		return new Promise<App>(async (resolve, _) => {
 			var app = new App();
@@ -350,7 +350,7 @@ export class App implements IApp {
 			// Set the properties from the db
 			if (!omitOwner) {
 				try {
-					app.owner = await User.get(await this.get(data.id), data.owner_id);
+					app.owner = await User.get({ id: data.id } as App, data.owner_id);
 				} catch { }
 			}
 
@@ -360,11 +360,11 @@ export class App implements IApp {
 			app.disabled = data.disabled == 1 ? true : false;
 			app.disableReason = data.disable_reason || 'No reason';
 			app.allowUserSelfDeletion = data.allow_user_self_deletion == 1 ? true : false;
-      app.publicSubscriptions = data.subscriptions_public == 1 ? true : false;
-      app.multipleSubscriptions = data.subscriptions_multiple == 1 ? true : false;
-      app.usersCanCreateFiles = data.users_can_create_files == 1 ? true : false;
-      app.inviteOnly = data.invite_only == 1 ? true : false;
-      
+			app.publicSubscriptions = data.subscriptions_public == 1 ? true : false;
+			app.multipleSubscriptions = data.subscriptions_multiple == 1 ? true : false;
+			app.usersCanCreateFiles = data.users_can_create_files == 1 ? true : false;
+			app.inviteOnly = data.invite_only == 1 ? true : false;
+
 			return resolve(app);
 		})
 	}
