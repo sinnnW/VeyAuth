@@ -337,6 +337,29 @@ export class App implements IApp {
 		})
 	}
 
+	static list(auth: User): Promise<App[]> {
+		return new Promise((resolve, reject) => {
+			if (!auth.permissions.has(FLAGS.ADMIN))
+				return reject('Invalid permissions');
+
+			Core.db.all('SELECT * FROM applications', async (err, data) => {
+				if (err)
+					return reject(err);
+
+				let list: App[] = [];
+				for (var x = 0;x < data.length;x++) {
+					let filled = await App.fill(data[x], auth.id == data[x].owner_id);
+					if (auth.id == data[x].owner_id)
+						filled.owner = auth;
+
+					list.push(filled);
+				}
+			
+				return resolve(list);
+			})
+		})
+	}
+
 	/**
 	 * Fill in an application class from raw SQL data
 	 * @param {any} data Raw SQL output
