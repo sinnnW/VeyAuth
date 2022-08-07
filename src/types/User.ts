@@ -12,6 +12,7 @@ import { SubscriptionManager } from './SubscriptionManager';
 import { FileManager } from './FileManager';
 import { VariableManager } from './VariableManager';
 import { InviteManager } from './InviteManager';
+import { createImportEqualsDeclaration } from 'typescript';
 
 enum GET_FLAGS {
   GET_BY_ID,
@@ -387,6 +388,30 @@ export class User implements IUser {
         return resolve(await this.fill(data));
       })
     })
+  }
+
+  /**
+   * List all users in an application
+   * @param {User} auth Authorization
+   * @param {App} app Application
+   * @returns {User[]} All users
+   */
+  static list(auth: User, app: App): Promise<User[]> {
+    return new Promise((resolve, reject) => {
+      if (!auth.permissions.has(FLAGS.MODIFY_USERS))
+        return reject('Invalid permissions');
+
+      Core.db.all('SELECT * FROM users WHERE application_id = ?', [app.id], async (err, data) => {
+        if (err)
+          return reject(err);
+
+        let list: User[] = [];
+        for (var x = 0;x < data.length;x++)
+          list.push(await User.fill(data[x]));
+
+        return resolve(list);
+      })
+    });
   }
 
   /**
