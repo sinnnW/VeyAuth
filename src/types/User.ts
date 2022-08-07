@@ -397,7 +397,7 @@ export class User implements IUser {
    */
   static list(auth: User, app: App): Promise<User[]> {
     return new Promise((resolve, reject) => {
-      if (!auth.permissions.has(FLAGS.MODIFY_USERS))
+      if (!auth.permissions.has(FLAGS.MODIFY_USERS, app.id))
         return reject('Invalid permissions');
 
       Core.db.all('SELECT * FROM users WHERE application_id = ?', [app.id], async (err, data) => {
