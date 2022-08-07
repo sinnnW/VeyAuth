@@ -69,7 +69,7 @@ export class User implements IUser {
         return reject('Invalid permissions')
 
       this.token = SecurityHelper.encodeUser(this)
-      Core.db.run('UPDATE users SET token = ? WHERE id = ?', [this.token, this.id], err => {
+      Core.db.run('UPDATE users SET token = ? WHERE application_id = ? AND id = ?', [this.token, this.application.id, this.id], err => {
         if (err)
           return reject(err);
         else {
