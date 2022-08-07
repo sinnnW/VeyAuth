@@ -12,7 +12,6 @@ import { SubscriptionManager } from './SubscriptionManager';
 import { FileManager } from './FileManager';
 import { VariableManager } from './VariableManager';
 import { InviteManager } from './InviteManager';
-import { createImportEqualsDeclaration } from 'typescript';
 
 enum GET_FLAGS {
   GET_BY_ID,
