@@ -173,7 +173,7 @@ export class User implements IUser {
         return reject('Username cannot contain special characters')
 
       Core.logger.debug(`Saving user information for ${this.format}, auth: ${auth.format}`);
-      Core.db.get('SELECT * FROM users WHERE username = ? AND application_id = ?', [this.username, this.application.id], (err, row) => {
+      Core.db.get('SELECT * FROM users WHERE id = ? AND application_id = ?', [this.id, this.application.id], (err, row) => {
         if (err)
           return reject(err);
         else if (row && this.username != this.#prevUsername)
@@ -182,24 +182,24 @@ export class User implements IUser {
         // Run all the save commands
         Core.db.serialize(() => {
           // Set the username
-          Core.db.run('UPDATE users SET username = ? WHERE id = ?', [this.username, this.id]);
+          Core.db.run('UPDATE users SET username = ? WHERE application_id = ? AND id = ?', [this.username, this.application.id, this.id]);
           Core.logger.debug('Updated username');
 
           // Update password
           this.password = SecurityHelper.hashString(this.password);
-          Core.db.run('UPDATE users SET password = ? WHERE id = ?', [this.password, this.id]);
+          Core.db.run('UPDATE users SET password = ? WHERE application_id = ? AND id = ?', [this.password, this.application.id, this.id]);
           Core.logger.debug('Updated password');
 
           // Update disabled
-          Core.db.run('UPDATE users SET disabled = ? WHERE id = ?', [this.disabled ? 1 : 0, this.id]);
+          Core.db.run('UPDATE users SET disabled = ? WHERE application_id = ? AND id = ?', [this.disabled ? 1 : 0, this.application.id, this.id]);
           Core.logger.debug('Updated disabled');
 
           // Update disable_reason
-          Core.db.run('UPDATE users SET disable_reason = ? WHERE id = ?', [this.disableReason == 'No reason' ? null : this.disableReason, this.id]);
+          Core.db.run('UPDATE users SET disable_reason = ? WHERE application_id = ? AND id = ?', [this.disableReason == 'No reason' ? null : this.disableReason, this.application.id, this.id]);
           Core.logger.debug('Updated disable_reason');
 
           // Update HWID
-          Core.db.run('UPDATE users SET hwid = ? WHERE id = ?', [this.hwid, this.id], async () => {
+          Core.db.run('UPDATE users SET hwid = ? WHERE application_id = ? AND id = ?', [this.hwid, this.application.id, this.id], async () => {
             Core.logger.debug('Updated HWID');
 
             // Recalculate the token, just in case
