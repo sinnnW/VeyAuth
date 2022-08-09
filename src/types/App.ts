@@ -209,6 +209,25 @@ export class App implements IApp {
 					Core.db.run('UPDATE applications SET invite_only = ? WHERE id = ?', [this.inviteOnly, this.id]);
 					Core.logger.debug('Updated invite_only');
 
+					Core.db.run('UPDATE applications SET hwid_locked = ? WHERE id = ?', [this.hwidLocked ? 1 : 0, this.id]);
+					Core.logger.debug('Updated hwid_locked');
+
+					Core.db.run('UPDATE applications SET subscriptions_enabled = ? WHERE id = ?', [this.subscriptionsEnabled ? 1 : 0, this.id]);
+					Core.logger.debug('Updated subscriptions_enabled');
+
+					Core.db.run('UPDATE applications SET subscriptions_multiple = ? WHERE id = ?', [this.multipleSubscriptions ? 1 : 0, this.id]);
+					Core.logger.debug('Updated subscriptions_multiple');
+
+					Core.db.run('UPDATE applications SET subscriptions_public = ? WHERE id = ?', [this.publicSubscriptions ? 1 : 0, this.id]);
+					Core.logger.debug('Updated subscriptions_public');
+
+					Core.db.run('UPDATE applications SET allow_user_self_deletion = ? WHERE id = ?', [this.allowUserSelfDeletion ? 1 : 0, this.id]);
+					Core.logger.debug('Updated allow_user_self_deletion');
+
+					Core.db.run('UPDATE applications SET users_can_create_files = ? WHERE id = ?', [this.usersCanCreateFiles ? 1 : 0, this.id]);
+					Core.logger.debug('Updated users_can_create_files');
+
+
 					// Update disable_reason
 					Core.db.run('UPDATE applications SET disable_reason = ? WHERE id = ?', [this.disableReason == 'No reason' ? null : this.disableReason, this.id], async () => {
 						Core.logger.debug('Updated disable_reason');
