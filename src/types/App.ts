@@ -51,6 +51,9 @@ export class App implements IApp {
 	* @param {boolean} disabled true = disabled, false = enabled
 	*/
 	setDisabled(disabled: boolean) {
+		if (typeof disabled != 'boolean')
+			return;
+
 		this.#changes = true;
 		this.disabled = disabled;
 	}
@@ -114,36 +117,81 @@ export class App implements IApp {
 	 * @param {boolean} inviteOnly 
 	 */
 	setInviteOnly(inviteOnly: boolean) {
+		if (typeof inviteOnly != 'boolean')
+			return;
+
 		this.#changes = true;
 		this.inviteOnly = inviteOnly;
 	}
 
+	/**
+	 * Set subscription enabled/disabled
+	 * @param {boolean} enabled 
+	 */
 	setSubscriptionsEnabled(enabled: boolean) {
+		if (typeof enabled != 'boolean')
+			return;
+
 		this.#changes = true;
 		this.subscriptionsEnabled = enabled;
 	}
 
+	/**
+	 * Can users hold multiple subscriptions at the same time
+	 * @param {boolean} allowed 
+	 */
 	setMultipleSubscriptionsAllowed(allowed: boolean) {
+		if (typeof allowed != 'boolean')
+			return;
+
 		this.#changes = true;
 		this.multipleSubscriptions = allowed;
 	}
 
+	/**
+	 * Can anyone view anyone's subscriptions
+	 * @param {boolean} subsPublic 
+	 */
 	setSubscriptionsPublic(subsPublic: boolean) {
+		if (typeof subsPublic != 'boolean')
+			return;
+
 		this.#changes = true;
 		this.publicSubscriptions = subsPublic;
 	}
 
+	/**
+	 * Should users be locked based on HWID additionally
+	 * @param {boolean} locked 
+	 */
 	setHwidLocked(locked: boolean) {
+		if (typeof locked != 'boolean')
+			return;
+
 		this.#changes = true;
 		this.hwidLocked = locked;
 	}
 
+	/**
+	 * Can users delete their own accounts
+	 * @param {boolean} allowSelfDelete 
+	 */
 	setAllowUserSelfDeletion(allowSelfDelete: boolean) {
+		if (typeof allowSelfDelete != 'boolean')
+			return;
+
 		this.#changes = true;
 		this.allowUserSelfDeletion = allowSelfDelete;
 	}
 
+	/**
+	 * Can users create their own files
+	 * @param {boolean} allowFiles
+	 */
 	setUsersCanCreateFiles(allowFiles: boolean) {
+		if (typeof allowFiles != 'boolean')
+			return;
+
 		this.#changes = true;
 		this.usersCanCreateFiles = allowFiles;
 	}
