@@ -347,9 +347,9 @@ export class User implements IUser {
     return new Promise<User>((resolve, reject) => {
       let af = (user: User) => {
         if (user.application.disabled)
-          return reject(user.application.disableReason || 'No reason');
+          return reject('Application disabled: ' + (user.application.disableReason || 'No reason'));
         else if (user.disabled)
-          return reject(user.disableReason || 'No reason');
+          return reject('Account disabled: ' + (user.disableReason || 'No reason'));
         else
           return resolve(user);
       }
