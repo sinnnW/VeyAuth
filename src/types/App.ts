@@ -3,6 +3,7 @@ import { User } from './User';
 import { Core } from '..';
 import { Utils } from '../utils/Utils';
 import { FLAGS } from './UserPermissions';
+import { textChangeRangeIsUnchanged } from 'typescript';
 
 enum GET_FLAGS {
 	GET_BY_ID,
@@ -23,10 +24,12 @@ export class App implements IApp {
 	description: string;
 	owner: User;
 	allowUserSelfDeletion: boolean;
+	subscriptionsEnabled: boolean;
 	publicSubscriptions: boolean;
 	multipleSubscriptions: boolean;
 	usersCanCreateFiles: boolean;
 	inviteOnly: boolean;
+	hwidLocked: boolean;
 
 	// Internal var to detect if there is changes for saving
 	#changes = false;
@@ -113,6 +116,36 @@ export class App implements IApp {
 	setInviteOnly(inviteOnly: boolean) {
 		this.#changes = true;
 		this.inviteOnly = inviteOnly;
+	}
+
+	setSubscriptionsEnabled(enabled: boolean) {
+		this.#changes = true;
+		this.subscriptionsEnabled = enabled;
+	}
+
+	setMultipleSubscriptionsAllowed(allowed: boolean) {
+		this.#changes = true;
+		this.multipleSubscriptions = allowed;
+	}
+
+	setSubscriptionsPublic(subsPublic: boolean) {
+		this.#changes = true;
+		this.publicSubscriptions = subsPublic;
+	}
+
+	setHwidLocked(locked: boolean) {
+		this.#changes = true;
+		this.hwidLocked = locked;
+	}
+
+	setAllowUserSelfDeletion(allowSelfDelete: boolean) {
+		this.#changes = true;
+		this.allowUserSelfDeletion = allowSelfDelete;
+	}
+
+	setUsersCanCreateFiles(allowFiles: boolean) {
+		this.#changes = true;
+		this.usersCanCreateFiles = allowFiles;
 	}
 
 	/**
@@ -387,6 +420,8 @@ export class App implements IApp {
 			app.multipleSubscriptions = data.subscriptions_multiple == 1 ? true : false;
 			app.usersCanCreateFiles = data.users_can_create_files == 1 ? true : false;
 			app.inviteOnly = data.invite_only == 1 ? true : false;
+			app.subscriptionsEnabled = data.subscriptions_enabled == 1 ? true : false;
+			app.hwidLocked = data.hwid_locked == 1 ? true : false;
 
 			return resolve(app);
 		})
