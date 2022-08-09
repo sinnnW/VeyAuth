@@ -13,14 +13,7 @@ import { FileManager } from './FileManager';
 import { VariableManager } from './VariableManager';
 import { InviteManager } from './InviteManager';
 
-enum GET_FLAGS {
-  GET_BY_ID,
-  // GET_BY_USERNAME,
-  GET_BY_TOKEN
-};
-
 export class User implements IUser {
-  static GET_FLAGS = GET_FLAGS;
   readonly authenticated: boolean = false;
   id: number;
   username: string;
@@ -374,7 +367,7 @@ export class User implements IUser {
    * @param {number} id ID
    * @returns {Promise<User>} User found
    */
-  static get(app: App, id: number): Promise<User> {
+  static get(app: App, id: number, auth?: User): Promise<User> {
     return new Promise((resolve, reject) => {
       Core.db.get('SELECT * FROM users WHERE application_id = ? AND id = ?', [app.id, id], async (err, data) => {
         if (err)
@@ -382,9 +375,12 @@ export class User implements IUser {
         else if (!data)
           return reject('Unknown user');
 
-        delete data.token;
-        delete data.password;
-        return resolve(await this.fill(data));
+        if (!auth?.permissions.has(FLAGS.MODIFY_USERS, app.id)) {
+          delete data.token;
+          delete data.password;
+          return resolve(await this.fill(data));
+        } else
+          return resolve(await this.fill(data, true));
       })
     })
   }
