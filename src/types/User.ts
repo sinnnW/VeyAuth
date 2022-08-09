@@ -78,6 +78,9 @@ export class User implements IUser {
    * @param {boolean} disabled Disabled
    */
   setDisabled(disabled: boolean) {
+    if (typeof disabled != 'boolean')
+      return;
+
     this.#changes = true;
     this.disabled = disabled;
   }
