@@ -298,9 +298,9 @@ export class App implements IApp {
 	 * @param {User} auth Authorization
 	 * @returns {Promise<void>}
 	 */
-	remove(auth: User): Promise<void> {
+	delete(auth: User): Promise<void> {
 		this.#deleted = true;
-		return App.remove(auth, this);
+		return App.delete(auth, this);
 	}
 
 	/**
@@ -318,12 +318,12 @@ export class App implements IApp {
 	}
 
 	/**
-	 * Remove an application
+	 * Delete an application
 	 * @param {User} auth Authorization
 	 * @param {App} app Application
 	 * @returns {Promise<void>}
 	 */
-	static remove(auth: User, app: App): Promise<void> {
+	static delete(auth: User, app: App): Promise<void> {
 		return new Promise((resolve, reject) => {
 			// Make sure user has permission
 			if (!auth?.permissions.has(FLAGS.MODIFY_USERS, app.id))
