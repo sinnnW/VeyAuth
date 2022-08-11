@@ -217,21 +217,21 @@ export class User {
    * This will delete the current user
    * @param {User} auth Authorization
    */
-  remove(auth: User): Promise<void> {
+  delete(auth: User): Promise<void> {
     this.#deleted = true;
-    return User.remove(auth, this);
+    return User.delete(auth, this);
   }
 
-  static remove(auth: User, user: User): Promise<void> {
+  static delete(auth: User, user: User): Promise<void> {
     return new Promise((resolve, reject) => {
       if (!auth?.permissions.has(FLAGS.DELETE_USERS) && !(user.application.allowUserSelfDeletion && user.authenticated))
         return reject('Invalid permissions');
 
       Core.db.serialize(() => {
-        Core.db.run('DELETE FROM users WHERE id = ?', [user.id]);
+        Core.db.run('DELETE FROM users WHERE application_id = ? AND id = ?', [user.application.id, user.id]);
         Core.db.run('DELETE FROM applications WHERE owner_id = ?', [user.id]);
-        Core.db.run('DELETE FROM variables WHERE user_id = ?', [user.id]);
-        Core.db.run('DELETE FROM permissions WHERE user_id = ?', [user.id], () => {
+        Core.db.run('DELETE FROM variables WHERE application_id = ? AND user_id = ?', [user.application.id, user.id]);
+        Core.db.run('DELETE FROM permissions WHERE application_id = ? AND user_id = ?', [user.application.id, user.id], () => {
           Core.logger.debug(`Deleted user ${user.format}`);
           resolve();
         });
