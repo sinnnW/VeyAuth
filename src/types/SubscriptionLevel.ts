@@ -1,11 +1,10 @@
 import { App } from './App';
 import { User } from './User';
-import { ISubscriptionLevel } from './interfaces/ISubscriptionLevel';
 import { Core } from '..';
 import { FLAGS } from './UserPermissions';
 import { Utils } from '../utils/Utils';
 
-export class SubscriptionLevel implements ISubscriptionLevel {
+export class SubscriptionLevel {
   // IBase attributes
   id: number;
   disabled: boolean;

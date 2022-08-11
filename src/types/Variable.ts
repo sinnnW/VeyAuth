@@ -1,11 +1,10 @@
-import { IVariable } from './interfaces/IVariable';
 import { Utils } from '../utils/Utils';
 import { App } from './App';
 import { User } from './User';
 import { Core } from '..';
 import { FLAGS } from './UserPermissions';
 
-export class Variable implements IVariable {
+export class Variable {
   key: string;
   value: string;
   private: boolean;

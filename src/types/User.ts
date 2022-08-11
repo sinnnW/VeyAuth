@@ -1,5 +1,4 @@
 import { Core } from '..';
-import { IUser } from './interfaces/IUser';
 import { FLAGS } from './UserPermissions';
 import { UserPermissionsArray } from './UserPermissionsArray';
 import { App } from './App';
@@ -13,7 +12,7 @@ import { FileManager } from './FileManager';
 import { VariableManager } from './VariableManager';
 import { InviteManager } from './InviteManager';
 
-export class User implements IUser {
+export class User {
   readonly authenticated: boolean = false;
   id: number;
   username: string;

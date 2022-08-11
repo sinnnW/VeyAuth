@@ -1,8 +1,7 @@
-import { IInviteManager } from './interfaces/IInviteManager';
 import { Invite } from './Invite';
 import { User } from './User'
 
-export class InviteManager implements IInviteManager {
+export class InviteManager {
   created: Invite[];
   claimed: Invite | null;
 

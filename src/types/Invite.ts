@@ -1,11 +1,10 @@
-import { IInvite } from './interfaces/IInvite';
 import { App } from './App';
 import { User } from './User';
 import { FLAGS } from './UserPermissions';
 import { Utils } from '../utils/Utils';
 import { Core } from '..';
 
-export class Invite implements IInvite {
+export class Invite {
   code: string;
   application: App;
   createdBy: User;

@@ -1,10 +1,9 @@
-import { IFileManager } from './interfaces/IFileManager';
 import { Core } from '..';
 import { App } from './App';
 import { User } from './User';
 import { File } from './File';
 
-export class FileManager implements IFileManager {
+export class FileManager {
   #auth: User;
 
   user: File[] = [];

@@ -1,4 +1,3 @@
-import { IFile } from './interfaces/IFile';
 import { User } from './User';
 import { App } from './App';
 import { Utils } from '../utils/Utils';
@@ -7,7 +6,7 @@ import { Core } from '..';
 import { join } from 'path';
 import fs from 'fs';
 
-export class File implements IFile {
+export class File {
   id: number;
   disabled: boolean;
   disableReason: string;

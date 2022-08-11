@@ -1,4 +1,3 @@
-import { IApp } from './interfaces/IApp';
 import { User } from './User';
 import { Core } from '..';
 import { Utils } from '../utils/Utils';
@@ -10,7 +9,7 @@ enum GET_FLAGS {
 	GET_BY_NAME
 }
 
-export class App implements IApp {
+export class App {
 	// FLAGS
 	static GET_FLAGS = GET_FLAGS;
 

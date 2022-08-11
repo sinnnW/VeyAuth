@@ -1,10 +1,9 @@
 import { Subscription } from './Subscription';
 import { SubscriptionLevel } from './SubscriptionLevel';
 import { User } from './User';
-import { ISubscriptionManager } from './interfaces/ISubscriptionManager';
 import { Core } from '..';
 
-export class SubscriptionManager implements ISubscriptionManager {
+export class SubscriptionManager {
   all: Subscription[] | Subscription | null;
 
   // This is a completely hidden variable that is used internally only.

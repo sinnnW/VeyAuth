@@ -1,8 +1,7 @@
-import { IVariableManager } from './interfaces/IVariableManager';
 import { Variable } from './Variable';
 import { User } from './User';
 
-export class VariableManager implements IVariableManager {
+export class VariableManager {
   all: Variable[] = [];
   user: Variable[] = [];
   application: Variable[] = [];
