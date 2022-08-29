@@ -18,7 +18,7 @@ I needed to recode my legacy authentication system I had originally wrote for a 
 * [Voracious](https://github.com/voraci0us)
 
 ## Pull requests
-Pull reqeusts will be reviewed and are welcome
+Pull requests will be reviewed and are welcome
 
 ## Todo:
 * Write good code comments
