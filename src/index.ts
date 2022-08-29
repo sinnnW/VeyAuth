@@ -32,7 +32,7 @@ export class Core {
     // Load .env vars
     config();
 
-    //#region Setup database
+    // Setup database
     this.logger.info('Setting up tables and data...');
     this.db.serialize(() => {
       // Applications table
@@ -60,34 +60,33 @@ export class Core {
       this.db.run('CREATE TABLE IF NOT EXISTS "variables" ( "application_id" INTEGER NOT NULL, "user_id" INTEGER, "key" INTEGER NOT NULL, "value" INTEGER, "private" INTEGER NOT NULL DEFAULT 1, PRIMARY KEY("application_id","user_id","user_id","key"))');
       
       // Create a application named Global, this is the global permissions
-      this.db.run('REPLACE INTO applications (id, name) VALUES (-1, "SystemGlobal")');
+      this.db.run('REPLACE INTO applications (id, name) VALUES (-1, "SystemGlobal")', () => {
+        // Check all the environmental vars, if they don't exist, create them
+        // - verlox @ 1/28/22
+        this.logger.info('Checking environment...');
+    
+        // Check for SESSION_SECRET, this is for the JWTs
+        if (!process.env.SESSION_SECRET) {
+          process.env.SESSION_SECRET = Utils.createString(20, true, true, false);
+          fs.appendFileSync('.env', `\nSESSION_SECRET=${process.env.SESSION_SECRET}`);
+    
+          this.logger.info(`[ENV] Created SESSION_SECRET in .env: ${process.env.SESSION_SECRET}`);
+        } else
+          this.logger.info(`[ENV] SESSION_SECRET is ${process.env.SESSION_SECRET}`);
+    
+        // Check for PASSWORD_SALT, this is used in the hashString function in SecurityHelper
+        if (!process.env.PASSWORD_SALT) {
+          process.env.PASSWORD_SALT = genSaltSync(15);
+          fs.appendFileSync('.env', `\nPASSWORD_SALT=${process.env.PASSWORD_SALT}`);
+    
+          this.logger.info(`[ENV] Created PASSWORD_SALT in .env: ${process.env.PASSWORD_SALT}`);
+        } else
+          this.logger.info(`[ENV] PASSWORD_SALT is ${process.env.PASSWORD_SALT}`);
+    
+        // Finished loading this shitshow
+        this.logger.info('Finished loading VeyAuth!');
+        this.started = true;
+      });
     });
-    //#endregion
-
-    // Check all the environmental vars, if they don't exist, create them
-    // - verlox @ 1/28/22
-    this.logger.info('Checking environment...');
-
-    // Check for SESSION_SECRET, this is for the JWTs
-    if (!process.env.SESSION_SECRET) {
-      process.env.SESSION_SECRET = Utils.createString(20, true, true, false);
-      fs.appendFileSync('.env', `\nSESSION_SECRET=${process.env.SESSION_SECRET}`);
-
-      this.logger.info(`[ENV] Created SESSION_SECRET in .env: ${process.env.SESSION_SECRET}`);
-    } else
-      this.logger.info(`[ENV] SESSION_SECRET is ${process.env.SESSION_SECRET}`);
-
-    // Check for PASSWORD_SALT, this is used in the hashString function in SecurityHelper
-    if (!process.env.PASSWORD_SALT) {
-      process.env.PASSWORD_SALT = genSaltSync(15);
-      fs.appendFileSync('.env', `\nPASSWORD_SALT=${process.env.PASSWORD_SALT}`);
-
-      this.logger.info(`[ENV] Created PASSWORD_SALT in .env: ${process.env.PASSWORD_SALT}`);
-    } else
-      this.logger.info(`[ENV] PASSWORD_SALT is ${process.env.PASSWORD_SALT}`);
-
-    // Finished loading this shitshow
-    this.logger.info('Finished loading VeyAuth!');
-    this.started = true;
   }
 }
